@@ -1,0 +1,14 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.title {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  font-size: x-large;
+  align-items: center;
+  justify-content: center;
+}

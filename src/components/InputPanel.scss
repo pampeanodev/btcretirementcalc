@@ -1,0 +1,42 @@
+.input-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid silver;
+  border-radius: 4px;
+  background-color: whitesmoke;
+
+  &__inputs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    &.control {
+      flex-direction: row;
+      width: 100%;
+      justify-content: center;
+
+      label {
+        width: 15rem;
+        text-align: right;
+      }
+
+      .input {
+        width: 8rem;
+      }
+    }
+  }
+
+  &__sliders {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+
+    &.slider {
+      display: flex;
+      flex-direction: row;
+    }
+  }
+}
