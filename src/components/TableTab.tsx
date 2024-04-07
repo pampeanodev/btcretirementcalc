@@ -1,6 +1,5 @@
 import { Table, TableProps } from "antd";
 import Summary from "./Summary";
-import { BITCOIN_SIGN } from "../constants";
 import { useTranslation } from "react-i18next";
 import { AnnualTrackingData, CalculationResult } from "../models/CalculationResult";
 
@@ -49,7 +48,7 @@ const TableTab = ({
       render: (n: number) => <>{n.toFixed(8)}</>,
     },
     {
-      title: `${BITCOIN_SIGN} ${t("table.you-bought")}`,
+      title: t("table.you-bought"),
       dataIndex: "bitcoinBought",
       width: "8rem",
       key: "bitcoinBought",

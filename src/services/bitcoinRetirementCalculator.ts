@@ -34,18 +34,17 @@ export const calculate = (data: CalculationData, startingBtcPrice: number): Calc
     const newPendingSavingsFiat =
       (data.lifeExpectancy - currentAge) * data.desiredRetirementAnnualBudget;
     pendingSavingsFiat = newPendingSavingsFiat - accumulatedSavingsFiat;
+    result.dataSet.push({
+      key: year,
+      year: year,
+      age: currentAge,
+      savingsBtc: accumulatedSavingsBtc,
+      savingsFiat: accumulatedSavingsFiat,
+      bitcoinBought: btcBought,
+      bitcoinPrice: currentBtcPrice,
+    });
     if (pendingSavingsFiat <= 0) {
       canRetire = true;
-    } else {
-      result.dataSet.push({
-        key: year,
-        year: year,
-        age: currentAge,
-        savingsBtc: accumulatedSavingsBtc,
-        savingsFiat: accumulatedSavingsFiat,
-        bitcoinBought: btcBought,
-        bitcoinPrice: currentBtcPrice,
-      });
     }
   }
 
@@ -56,7 +55,7 @@ export const calculate = (data: CalculationData, startingBtcPrice: number): Calc
   result.savingsBitcoin = accumulatedSavingsBtc;
   result.savingsFiat = accumulatedSavingsFiat;
   let remainingSavings = result.savingsFiat;
-  for (let age = result.retirementAge; age <= data.lifeExpectancy; age++) {
+  for (let age = result.retirementAge; age < data.lifeExpectancy; age++) {
     remainingSavings -= result.annualRetirementBudget;
     result.dataSet.push({
       key: year,
