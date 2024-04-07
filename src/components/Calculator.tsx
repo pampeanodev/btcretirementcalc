@@ -96,11 +96,18 @@ const Calculator = () => {
       : calculate(data, btcPrice!);
 
     setRetirementAge(calculationResult.retirementAge);
-    setTableData(calculationResult.dataSet);
     setSavingsFiat(calculationResult.savingsFiat);
     setSavingsBitcoin(calculationResult.savingsBitcoin);
     setBitcoinPriceAtRetirement(calculationResult.bitcoinPriceAtRetirementAge);
     setAnnualBudget(calculationResult.annualRetirementBudget);
+
+    if (data.optimized) {
+      setTableData(calculationResult.dataSet);
+    } else {
+      setTableData(
+        calculationResult.dataSet.filter((x) => x.age < calculationResult.retirementAge),
+      );
+    }
 
     updateChartWithAfterRetirementData(calculationResult, data);
   };

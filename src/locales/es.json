@@ -10,10 +10,10 @@
   "input.growth-rate": "Crecimiento anual de precio estimado:",
   "input.life-expectancy": "Expectativa de vida:",
   "input.optimized": "Optimizada",
-  "input.savings-btc": "Monto de bitcoin que hodleas:",
+  "input.savings-btc": "Monto de ₿itcoin que hodleas:",
   "summary.annual-retirement-budget": "Presupuesto anual al retiro:",
   "summary.bitcoin-price": "Precio de ₿itcoin actual:",
-  "summary.btc-price-at-retirement": "Precio de bitcoin al retirarse:",
+  "summary.btc-price-at-retirement": "Precio de ₿itcoin al retirarse:",
   "summary.monthly-retirement-budget": "Presupuesto mensual al retiro:",
   "summary.retirement-age": "Edad de retiro:",
   "summary.total-savings": "Ahorros totales:",
@@ -23,5 +23,5 @@
   "table.bitcoin-price": "Precio de ₿itcoin",
   "table.not-relevant": "Irrelevante",
   "table.year": "Año",
-  "table.you-bought": "comprado"
+  "table.you-bought": "₿ que compras"
 }
