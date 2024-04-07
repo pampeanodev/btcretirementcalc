@@ -31,20 +31,21 @@ export const calculate = (data: CalculationData, startingBtcPrice: number): Calc
     const btcBought = parseFloat((data.annualBuyInFiat / currentBtcPrice).toPrecision(8));
     accumulatedSavingsBtc += btcBought;
     accumulatedSavingsFiat = accumulatedSavingsBtc * currentBtcPrice;
-    const newPendingSavingsFiat = (data.lifeExpectancy - currentAge) * data.desiredRetirementAnnualBudget;
+    const newPendingSavingsFiat =
+      (data.lifeExpectancy - currentAge) * data.desiredRetirementAnnualBudget;
     pendingSavingsFiat = newPendingSavingsFiat - accumulatedSavingsFiat;
-
-    result.dataSet.push({
-      key: year,
-      year: year,
-      age: currentAge,
-      savingsBtc: accumulatedSavingsBtc,
-      savingsFiat: accumulatedSavingsFiat,
-      bitcoinBought: btcBought,
-      bitcoinPrice: currentBtcPrice,
-    });
     if (pendingSavingsFiat <= 0) {
       canRetire = true;
+    } else {
+      result.dataSet.push({
+        key: year,
+        year: year,
+        age: currentAge,
+        savingsBtc: accumulatedSavingsBtc,
+        savingsFiat: accumulatedSavingsFiat,
+        bitcoinBought: btcBought,
+        bitcoinPrice: currentBtcPrice,
+      });
     }
   }
 
