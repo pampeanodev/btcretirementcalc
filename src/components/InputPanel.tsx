@@ -5,6 +5,7 @@ import "./InputPanel.scss";
 import { useTranslation } from "react-i18next";
 import { QuestionCircleTwoTone } from "@ant-design/icons";
 import ExplanatoryOverlay from "./ExplanatoryOverlay";
+import { BITCOIN_COLOR } from "../constants";
 interface InputPanelProps {
   onCalculate: (data: CalculationData) => void;
   clearChart: () => void;
@@ -156,7 +157,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
               200000: `$200K`,
             }}
             step={btcBuyStep}
-            tooltip={{ color: "#f2a900", open: true, placement: "top" }}
+            tooltip={{ color: BITCOIN_COLOR, open: true, placement: "top" }}
             max={btcBuyMax}
             onChange={(n) => handleChange(n, setAnnualDeposit)}
             value={typeof annualDeposit === "number" ? annualDeposit : 0}
@@ -169,7 +170,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
               0: "0%",
               100: "100%",
             }}
-            tooltip={{ color: "#f2a900", open: true, placement: "top" }}
+            tooltip={{ color: BITCOIN_COLOR, open: true, placement: "top" }}
             min={0}
             max={100}
             onChange={(n) => handleChange(n, setInterestRate)}
@@ -187,7 +188,10 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             title={t("mode-explanation.title")}
             trigger="click"
           >
-            <QuestionCircleTwoTone data-tooltip-id="my-tooltip-multiline" twoToneColor="#f2a900" />
+            <QuestionCircleTwoTone
+              data-tooltip-id="my-tooltip-multiline"
+              twoToneColor={BITCOIN_COLOR}
+            />
           </Popover>
         </div>
       </div>
