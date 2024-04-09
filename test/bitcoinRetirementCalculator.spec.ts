@@ -2,7 +2,8 @@ import { CalculationResult } from "../src/models/CalculationResult";
 import { calculate } from "../src/services/bitcoinRetirementCalculator";
 import { expect, test } from "vitest";
 import { expectedOutput } from "./output.ts";
-import { testInput, testInputWithInflation } from "./input.ts";
+import { testInput } from "./input.ts";
+import { InputData } from "../src/models/InputData.ts";
 
 test("Calculate should give expected results", () => {
   const expectedCalculation: CalculationResult = expectedOutput;
@@ -19,7 +20,7 @@ test("Calculate should give expected results", () => {
   );
 });
 
-test("Calculation with 10 percent inflation should give expected results", () => {
+test("Calculation with 2 percent inflation should give expected results", () => {
   const expectedCalculation: CalculationResult = {
     startingBitcoinPrice: 70000,
     dataSet: [],
@@ -29,7 +30,16 @@ test("Calculation with 10 percent inflation should give expected results", () =>
     bitcoinPriceAtRetirementAge: 2618304.041,
     annualRetirementBudget: 223092.73,
   };
-
+  const testInputWithInflation: InputData = {
+    currentAge: 30,
+    currentSavingsInBitcoin: 1,
+    annualBuyInFiat: 2000,
+    annualPriceGrowth: 10,
+    lifeExpectancy: 83,
+    desiredRetirementAnnualBudget: 100000,
+    optimized: false,
+    inflationRate: 2,
+  };
   const output = calculate(testInputWithInflation, expectedCalculation.startingBitcoinPrice);
   expect(output.retirementAge).toBe(expectedCalculation.retirementAge);
   expect(output.savingsBitcoin.toFixed(8)).toBe(expectedCalculation.savingsBitcoin.toFixed(8));
