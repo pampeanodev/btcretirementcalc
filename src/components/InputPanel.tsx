@@ -1,8 +1,11 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { CalculationData } from "../models/CalculationData";
-import { Slider, InputNumber, Switch } from "antd";
+import { Slider, InputNumber, Switch, Popover } from "antd";
 import "./InputPanel.scss";
 import { useTranslation } from "react-i18next";
+import { QuestionCircleTwoTone } from "@ant-design/icons";
+import ExplanatoryOverlay from "./ExplanatoryOverlay";
+import { BITCOIN_COLOR } from "../constants";
 interface InputPanelProps {
   onCalculate: (data: CalculationData) => void;
   clearChart: () => void;
@@ -148,37 +151,48 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
       </div>
       <div className="input-panel__sliders">
         <div className="slider">
-          <label>{t("input.annual-buy")}</label>
           <Slider
             marks={{
               0: `$${btcBuyMin}`,
               200000: `$200K`,
             }}
             step={btcBuyStep}
-            tooltip={{ open: true, placement: "top" }}
+            tooltip={{ color: BITCOIN_COLOR, open: true, placement: "top" }}
             max={btcBuyMax}
             onChange={(n) => handleChange(n, setAnnualDeposit)}
             value={typeof annualDeposit === "number" ? annualDeposit : 0}
           />
+          <label>{t("input.annual-buy")}</label>
         </div>
         <div className="slider">
-          <label>{t("input.growth-rate")}</label>
           <Slider
             marks={{
               0: "0%",
               100: "100%",
             }}
-            tooltip={{ open: true, placement: "top" }}
+            tooltip={{ color: BITCOIN_COLOR, open: true, placement: "top" }}
             min={0}
             max={100}
             onChange={(n) => handleChange(n, setInterestRate)}
             value={typeof interestRate === "number" ? interestRate : 0}
           />
+          <label>{t("input.growth-rate")}</label>
         </div>
-        <div>
-          <span>{t("input.conservative")} </span>
+        <div className="input-panel__sliders switch">
+          <span>{t("input.conservative")}</span>
           <Switch onChange={handleOptimizedSwitchChange} />
           <span> {t("input.optimized")}</span>
+          <Popover
+            zIndex={2000}
+            content={<ExplanatoryOverlay />}
+            title={t("mode-explanation.title")}
+            trigger="click"
+          >
+            <QuestionCircleTwoTone
+              data-tooltip-id="my-tooltip-multiline"
+              twoToneColor={BITCOIN_COLOR}
+            />
+          </Popover>
         </div>
       </div>
     </div>
