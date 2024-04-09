@@ -170,6 +170,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           <Slider
             marks={{
               0: `$${btcBuyMin}`,
+              100000: t("slider.annual-buy"),
               200000: `$200K`,
             }}
             step={btcBuyStep}
@@ -178,12 +179,12 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             onChange={(n) => handleChange(n, setAnnualDeposit)}
             value={typeof annualDeposit === "number" ? annualDeposit : 0}
           />
-          <label>{t("input.annual-buy")}</label>
         </div>
         <div className="slider">
           <Slider
             marks={{
               0: "0%",
+              50: t("slider.growth-rate"),
               100: "100%",
             }}
             tooltip={{ color: BITCOIN_COLOR, open: true, placement: "top" }}
@@ -192,7 +193,6 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             onChange={(n) => handleChange(n, setInterestRate)}
             value={typeof interestRate === "number" ? interestRate : 0}
           />
-          <label>{t("input.growth-rate")}</label>
         </div>
         <div className="input-panel__sliders switch">
           <span>{t("input.conservative")}</span>
