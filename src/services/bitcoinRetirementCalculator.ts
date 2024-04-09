@@ -1,15 +1,17 @@
-import { CalculationData } from "../models/CalculationData";
+import { InputData } from "../models/InputData";
 import { CalculationResult } from "../models/CalculationResult";
 
-export const calculate = (data: CalculationData, startingBtcPrice: number): CalculationResult => {
+export const calculate = (data: InputData, startingBtcPrice: number): CalculationResult => {
+  let year = new Date().getFullYear();
   const yearsToLive = data.lifeExpectancy - data.currentAge;
+  const inflationFactor = 1 + data.inflationRate / 100;
   const growthFactor = 1 + data.annualPriceGrowth / 100;
-  let pendingSavingsFiat = yearsToLive * data.desiredRetirementAnnualBudget;
   let currentBtcPrice = startingBtcPrice;
   let accumulatedSavingsBtc = data.currentSavingsInBitcoin;
   let accumulatedSavingsFiat = data.currentSavingsInBitcoin * currentBtcPrice;
   let currentAge = data.currentAge;
-  let year = new Date().getFullYear();
+  let currentDesiredAnualBudget = data.desiredRetirementAnnualBudget;
+  let pendingSavingsFiat = yearsToLive * data.desiredRetirementAnnualBudget * inflationFactor;
 
   const result: CalculationResult = {
     startingBitcoinPrice: currentBtcPrice,
@@ -27,12 +29,13 @@ export const calculate = (data: CalculationData, startingBtcPrice: number): Calc
     currentAge++;
     // increase bitcoin price as composite interest based on annual price growth
     currentBtcPrice = currentBtcPrice * growthFactor;
+    currentDesiredAnualBudget = currentDesiredAnualBudget * inflationFactor;
+
     // accumulate amount of btc you hodl
     const btcBought = parseFloat((data.annualBuyInFiat / currentBtcPrice).toPrecision(8));
     accumulatedSavingsBtc += btcBought;
     accumulatedSavingsFiat = accumulatedSavingsBtc * currentBtcPrice;
-    const newPendingSavingsFiat =
-      (data.lifeExpectancy - currentAge) * data.desiredRetirementAnnualBudget;
+    const newPendingSavingsFiat = (data.lifeExpectancy - currentAge) * currentDesiredAnualBudget;
     pendingSavingsFiat = newPendingSavingsFiat - accumulatedSavingsFiat;
     result.dataSet.push({
       key: year,

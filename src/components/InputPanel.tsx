@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { CalculationData } from "../models/CalculationData";
+import { InputData } from "../models/InputData";
 import { Slider, InputNumber, Switch, Popover } from "antd";
 import "./InputPanel.scss";
 import { useTranslation } from "react-i18next";
@@ -7,7 +7,7 @@ import { QuestionCircleTwoTone } from "@ant-design/icons";
 import ExplanatoryOverlay from "./ExplanatoryOverlay";
 import { BITCOIN_COLOR } from "../constants";
 interface InputPanelProps {
-  onCalculate: (data: CalculationData) => void;
+  onCalculate: (data: InputData) => void;
   clearChart: () => void;
 }
 
@@ -18,6 +18,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
   const [interestRate, setInterestRate] = useState<number>(12);
   const [lifeExpectancy, setLifeExpectancy] = useState<number>(86);
   const [desiredRetirementIncome, setDesiredRetirementIncome] = useState<number>(100000);
+  const [inflationRate, setInflationRate] = useState<number>(1);
   const [optimized, setOptimized] = useState(false);
   const [t] = useTranslation();
   const btcBuyMin: number = 0;
@@ -35,6 +36,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
     interestRate,
     lifeExpectancy,
     desiredRetirementIncome,
+    inflationRate,
     optimized,
   ]);
 
@@ -75,6 +77,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
       lifeExpectancy: lifeExpectancy,
       desiredRetirementAnnualBudget: desiredRetirementIncome,
       optimized: optimized,
+      inflationRate: inflationRate,
     });
   };
 
@@ -135,6 +138,19 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             max={100}
             value={interestRate}
             onChange={(n) => handleChange(n!, setInterestRate)}
+          />
+        </div>
+        <div className="input-panel__inputs control">
+          <label htmlFor="inflationRate">{t("input.inflation-rate")}</label>
+          <InputNumber
+            type="number"
+            className="input"
+            name="inflationRate"
+            addonAfter={"%"}
+            min={0}
+            max={100}
+            value={inflationRate}
+            onChange={(n) => handleChange(n!, setInflationRate)}
           />
         </div>
         <div className="input-panel__inputs control">

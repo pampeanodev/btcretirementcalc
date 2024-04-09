@@ -1,9 +1,9 @@
 import { AnnualBitcoinPrice } from "../models/AnnualBitcoinPrice";
-import { CalculationData } from "../models/CalculationData";
+import { InputData } from "../models/InputData";
 import { CalculationResult } from "../models/CalculationResult";
 
 export const calculateOptimal = (
-  input: CalculationData,
+  input: InputData,
   startingBitcoinPrice: number,
 ): CalculationResult => {
   const growthRate = input.annualPriceGrowth / 100;
@@ -24,7 +24,7 @@ export const calculateOptimal = (
 };
 
 const calculateBitcoinPriceHistory = (
-  input: CalculationData,
+  input: InputData,
   bitcoinPrice: number,
   growthFactor: number,
 ) => {
@@ -41,7 +41,7 @@ const calculateBitcoinPriceHistory = (
 };
 
 const estimateRetirementAge = (
-  input: CalculationData,
+  input: InputData,
   currentBtcPrice: number,
   growthFactor: number,
   bitcoinPriceHistory: AnnualBitcoinPrice[],

@@ -7,6 +7,7 @@
   "input.conservative": "Conservative",
   "input.current-age": "Current age:",
   "input.desired-total-savings": "Desired annual retirement income:",
+  "input.inflation-rate": "Annual inflation rate:",
   "input.growth-rate": "Price annual growth rate:",
   "input.life-expectancy": "Life expectancy:",
   "input.optimized": "Optimized",

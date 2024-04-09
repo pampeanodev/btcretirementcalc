@@ -4,7 +4,7 @@ import { httpClient } from "../services/http-client";
 const AxiosApiInterceptor = () => {
   useEffect(() => {
     const requestInterceptor = httpClient.interceptors.request.use(async (config) => {
-      config.headers["X-API-KEY"] = import.meta.env.VITE_APP_BTC_API_KEY;
+      // config.headers["X-API-KEY"] = import.meta.env.VITE_APP_BTC_API_KEY;
       return config;
     });
 

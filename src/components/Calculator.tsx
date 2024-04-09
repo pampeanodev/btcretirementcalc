@@ -3,7 +3,7 @@ import "chart.js/auto";
 import "./Calculator.scss";
 import { useBitcoinPrice } from "../hooks/useBitcoinPrice";
 import InputPanel from "./InputPanel";
-import { CalculationData } from "../models/CalculationData";
+import { InputData } from "../models/InputData";
 import { useTranslation } from "react-i18next";
 import ChartTab from "./ChartTab";
 import { Spin, Tabs, TabsProps } from "antd";
@@ -90,7 +90,7 @@ const Calculator = () => {
     setChartData({ labels, datasets: dataSets });
   };
 
-  const refreshCalculations = (data: CalculationData) => {
+  const refreshCalculations = (data: InputData) => {
     const calculationResult = data.optimized
       ? calculateOptimal(data, btcPrice!)
       : calculate(data, btcPrice!);
@@ -114,7 +114,7 @@ const Calculator = () => {
 
   function updateChartWithAfterRetirementData(
     calculationResult: CalculationResult,
-    data: CalculationData,
+    data: InputData,
   ) {
     const btcDataSet = calculationResult.dataSet.map((item) => item.savingsBtc);
     const fiatDataSet = data.optimized
@@ -129,7 +129,7 @@ const Calculator = () => {
       {btcPrice && btcPrice > 0 ? (
         <div className="calculator">
           <InputPanel
-            onCalculate={(data: CalculationData) => refreshCalculations(data)}
+            onCalculate={(data: InputData) => refreshCalculations(data)}
             clearChart={clearChart}
           ></InputPanel>
           <div className="calculator__result">
