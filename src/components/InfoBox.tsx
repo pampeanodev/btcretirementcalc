@@ -1,10 +1,17 @@
+import "./InfoBox.scss";
 interface InfoBoxProps {
   type: string;
-  msg: string;
+  label: string;
+  value: string | number;
 }
 
-const InfoBox = ({ type, msg }: InfoBoxProps) => {
-  return <div className={`alert alert-${type}`}>{msg}</div>;
+const InfoBox = ({ type, label, value }: InfoBoxProps) => {
+  return (
+    <div className={`infobox infobox-${type}`}>
+      {label}
+      <span style={{ fontWeight: "500" }}>{value}</span>
+    </div>
+  );
 };
 
 export default InfoBox;

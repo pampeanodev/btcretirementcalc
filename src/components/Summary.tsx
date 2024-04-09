@@ -10,24 +10,36 @@ type Props = {
   annualBudget: number;
 };
 
-const Summary = ({ retirementAge, totalSavings, bitcoinPriceAtRetirement, annualBudget, bitcoinPrice }: Props) => {
+const Summary = ({
+  retirementAge,
+  totalSavings,
+  bitcoinPriceAtRetirement,
+  annualBudget,
+  bitcoinPrice,
+}: Props) => {
   const onTrack = true;
   const [t] = useTranslation();
   return (
     <div className="calculator__summary">
       <div className="column">
-        <InfoBox msg={`${t("summary.retirement-age")} ${retirementAge}`} type="info" />
-        <InfoBox msg={`${t("summary.total-savings")} ${toBtc(totalSavings)}`} type="info" />
-        <InfoBox msg={`${t("summary.btc-price-at-retirement")} ${toUsd(bitcoinPriceAtRetirement)}`} type="info" />
+        <InfoBox label={t("summary.retirement-age")} value={retirementAge} type="info" />
+        <InfoBox label={t("summary.total-savings")} value={toBtc(totalSavings)} type="info" />
+        <InfoBox
+          label={t("summary.btc-price-at-retirement")}
+          value={toUsd(bitcoinPriceAtRetirement)}
+          type="info"
+        />
       </div>
       <div className="column">
-        <InfoBox msg={`${t("summary.bitcoin-price")} ${toUsd(bitcoinPrice)}`} type="info" />
+        <InfoBox label={t("summary.bitcoin-price")} value={toUsd(bitcoinPrice)} type="info" />
         <InfoBox
-          msg={`${t("summary.annual-retirement-budget")} ${toUsd(annualBudget)}`}
+          label={t("summary.annual-retirement-budget")}
+          value={toUsd(annualBudget)}
           type={onTrack ? "success" : "danger"}
         />
         <InfoBox
-          msg={`${t("summary.monthly-retirement-budget")} ${toUsd(annualBudget / 12)}`}
+          label={t("summary.monthly-retirement-budget")}
+          value={toUsd(annualBudget / 12)}
           type={onTrack ? "success" : "danger"}
         />
       </div>

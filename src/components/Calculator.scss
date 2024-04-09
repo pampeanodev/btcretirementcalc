@@ -26,21 +26,6 @@
       flex-direction: column;
       width: 50%;
     }
-    .alert {
-      padding: 0.5rem 1rem;
-
-      &.alert-success {
-        color: #3c763d;
-      }
-
-      &.alert-info {
-        color: #31708f;
-      }
-
-      &.alert-danger {
-        color: #a94442;
-      }
-    }
   }
 
   &__result {

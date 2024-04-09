@@ -1,0 +1,19 @@
+.infobox {
+  padding: 0.5rem 1rem;
+
+  :last-child {
+    padding-left: 0.4rem;
+  }
+
+  &.infobox-success {
+    color: #3c763d;
+  }
+
+  &.infobox-info {
+    color: #31708f;
+  }
+
+  &.infobox-danger {
+    color: #a94442;
+  }
+}
