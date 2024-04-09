@@ -45,6 +45,7 @@ export const calculate = (data: InputData, startingBtcPrice: number): Calculatio
       savingsFiat: accumulatedSavingsFiat,
       bitcoinBought: btcBought,
       bitcoinPrice: currentBtcPrice,
+      annualRetirementBudget: currentDesiredAnualBudget,
     });
     if (pendingSavingsFiat <= 0) {
       canRetire = true;
@@ -68,6 +69,7 @@ export const calculate = (data: InputData, startingBtcPrice: number): Calculatio
       savingsFiat: remainingSavings,
       bitcoinBought: 0,
       bitcoinPrice: result.bitcoinPriceAtRetirementAge,
+      annualRetirementBudget: result.annualRetirementBudget,
     });
     year++;
   }
