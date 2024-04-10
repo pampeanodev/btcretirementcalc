@@ -27,10 +27,11 @@
   "summary.retirement-age": "Your retirement age:",
   "summary.total-savings": "Total Savings:",
   "table.accumulated-savings": "Fiat savings",
-  "table.accumulated-savings-btc": "BTC savings",
+  "table.accumulated-savings-btc": "₿ savings",
   "table.age": "Age",
   "table.bitcoin-price": "₿itcoin Price",
   "table.not-relevant": "Not relevant",
   "table.year": "Year",
-  "table.you-bought": "₿ you buy"
+  "table.you-bought": "₿ you buy",
+  "table.indexed-budget": "Budget (indexed)"
 }

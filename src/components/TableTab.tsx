@@ -54,6 +54,13 @@ const TableTab = ({
       key: "bitcoinBought",
       render: (n: number) => <span>{n.toFixed(8)}</span>,
     },
+    {
+      title: t("table.indexed-budget"),
+      dataIndex: "annualRetirementBudget",
+      width: "8rem",
+      key: "annualRetirementBudget",
+      render: (n: number) => <span>{n.toFixed(2)}</span>,
+    },
   ];
   return (
     <div>
