@@ -66,13 +66,15 @@ const estimateRetirementAge = (
 
   let accumulatedSavingsBitcoin = input.currentSavingsInBitcoin;
   let currentDesiredAnnualBudget = input.desiredRetirementAnnualBudget;
+  let currentAnnualBuyInFiat = input.annualBuyInFiat;
   let year = new Date().getFullYear();
 
   for (let age = input.currentAge + 1; age <= input.lifeExpectancy; age++) {
     year++;
     currentBtcPrice = currentBtcPrice * growthFactor;
     currentDesiredAnnualBudget = currentDesiredAnnualBudget * inflationFactor;
-    const bitcoinBought = input.annualBuyInFiat / currentBtcPrice;
+    currentAnnualBuyInFiat = currentAnnualBuyInFiat * inflationFactor;
+    const bitcoinBought = currentAnnualBuyInFiat / currentBtcPrice;
     accumulatedSavingsBitcoin += bitcoinBought;
 
     const totalBictoinWillNeed = calculateBitcoinWillNeedOverLife(age, bitcoinPriceHistory);

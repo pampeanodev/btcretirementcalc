@@ -12,3 +12,11 @@
   align-items: center;
   justify-content: center;
 }
+
+.signature {
+  display: flex;
+  justify-content: end;
+  font-size: small;
+  font-weight: 500;
+  gap: 0.3rem;
+}

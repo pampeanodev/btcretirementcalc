@@ -41,10 +41,10 @@ test("Calculation with 2 percent inflation should give expected results", () => 
   const expectedCalculation: CalculationResult = {
     startingBitcoinPrice: 70000,
     dataSet: [],
-    retirementAge: 64,
-    savingsBitcoin: 1.27453071,
-    savingsFiat: 2279290.29,
-    bitcoinPriceAtRetirementAge: 1788336.89,
+    retirementAge: 63,
+    savingsBitcoin: 1.33413558,
+    savingsFiat: 2168985.35,
+    bitcoinPriceAtRetirementAge: 1625760.809,
     annualRetirementBudget: 100000.0,
   };
   const testInputWithInflation: InputData = {
