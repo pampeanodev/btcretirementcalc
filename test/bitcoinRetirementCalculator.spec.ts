@@ -1,12 +1,28 @@
 import { CalculationResult } from "../src/models/CalculationResult";
 import { calculate } from "../src/services/bitcoinRetirementCalculator";
 import { expect, test } from "vitest";
-import { expectedOutput } from "./output.ts";
-import { testInput } from "./input.ts";
 import { InputData } from "../src/models/InputData.ts";
 
 test("Calculate should give expected results", () => {
-  const expectedCalculation: CalculationResult = expectedOutput;
+  const expectedCalculation = {
+    startingBitcoinPrice: 70000,
+    retirementAge: 63,
+    savingsBitcoin: 1.2734123536000002,
+    savingsFiat: 2070263.8986787011,
+    bitcoinPriceAtRetirementAge: 1625760.8093921517,
+    annualRetirementBudget: 103513.19493393505,
+    dataSet: [],
+  };
+  const testInput: InputData = {
+    currentAge: 30,
+    currentSavingsInBitcoin: 1,
+    annualBuyInFiat: 2000,
+    annualPriceGrowth: 10,
+    lifeExpectancy: 83,
+    desiredRetirementAnnualBudget: 100000,
+    optimized: false,
+    inflationRate: 0,
+  };
 
   const output = calculate(testInput, expectedCalculation.startingBitcoinPrice);
   expect(output.retirementAge).toBe(expectedCalculation.retirementAge);

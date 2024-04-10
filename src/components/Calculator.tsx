@@ -11,8 +11,9 @@ import { LineChartProps, LineChartData } from "../models/LineChartProps";
 import TableTab from "./TableTab";
 import { TableOutlined, AreaChartOutlined } from "@ant-design/icons";
 import { AnnualTrackingData, CalculationResult } from "../models/CalculationResult";
-import { calculateOptimal } from "../services/bitcoinRetirementOptimalCalculator";
+import { calculateOptimal } from "../services/bitcoinRetirementOptimizedCalculator";
 import { calculate } from "../services/bitcoinRetirementCalculator";
+import { BITCOIN_COLOR } from "../constants";
 
 const Calculator = () => {
   const [savingsBitcoin, setSavingsBitcoin] = useState<number>(0);
@@ -75,7 +76,9 @@ const Calculator = () => {
     if (fiatDataSet.length) {
       dataSets.push({
         label: "USD",
-        fill: "start",
+        fill: undefined,
+        borderColor: "darkGreen",
+        backgroundColor: "green",
         data: fiatDataSet,
       });
     }
@@ -83,6 +86,8 @@ const Calculator = () => {
       dataSets.push({
         label: "BTC",
         fill: undefined,
+        borderColor: BITCOIN_COLOR,
+        backgroundColor: "orange",
         data: btcDataSet,
       });
     }

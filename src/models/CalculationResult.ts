@@ -16,4 +16,5 @@ export interface AnnualTrackingData {
   savingsFiat: number;
   bitcoinBought: number;
   bitcoinPrice: number;
+  annualRetirementBudget: number;
 }
