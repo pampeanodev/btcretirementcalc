@@ -148,6 +148,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             type="number"
             className="input"
             name="inflationRate"
+            parser={(value) => parseFloat(value ?? "0").toFixed(1) as unknown as number}
             addonAfter={"%"}
             step={0.1}
             min={0}
