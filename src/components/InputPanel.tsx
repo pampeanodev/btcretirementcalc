@@ -17,7 +17,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
   const [annualDeposit, setAnnualDeposit] = useState<number>(0);
   const [bitcoinPriceAnnualGrowth, setBitcoinPriceAnnualGrowth] = useState<number>(12);
   const [lifeExpectancy, setLifeExpectancy] = useState<number>(86);
-  const [desiredRetirementIncome, setDesiredRetirementIncome] = useState<number>(100000);
+  const [desiredRetirementIncome, setDesiredRetirementIncome] = useState<number>(120000);
   const [inflationRate, setInflationRate] = useState<number>(2.0);
   const [optimized, setOptimized] = useState(false);
   const [t] = useTranslation();
@@ -120,6 +120,8 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           <InputNumber
             name="annualBuy"
             className="input"
+            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+            parser={(value) => value?.replace(/\$\s?|(,*)/g, "") as unknown as number}
             step={btcBuyStep}
             max={btcBuyMax}
             value={annualDeposit}
