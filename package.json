@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.6",
+    "@getalby/lightning-tools": "^5.0.2",
     "antd": "^5.16.0",
     "axios": "^1.6.8",
     "chart.js": "^4.4.2",

@@ -14,9 +14,13 @@
 }
 
 .signature {
+  padding: 1rem 0;
   display: flex;
   justify-content: end;
   font-size: medium;
   font-weight: 500;
   gap: 0.3rem;
+}
+.donate-input{
+  max-width: 10rem;
 }

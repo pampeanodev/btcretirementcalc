@@ -34,5 +34,7 @@
   "table.indexed-budget": "Presupuesto anual",
   "table.not-relevant": "Irrelevante",
   "table.year": "Año",
-  "table.you-bought": "₿ que compras"
+  "table.you-bought": "₿ que compras",
+  "donate.qrcode.title": "Donar con Lightning:",
+  "donate.donate": "Donar!"
 }

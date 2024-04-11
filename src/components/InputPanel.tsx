@@ -5,7 +5,7 @@ import "./InputPanel.scss";
 import { useTranslation } from "react-i18next";
 import { QuestionCircleTwoTone } from "@ant-design/icons";
 import ExplanatoryOverlay from "./ExplanatoryOverlay";
-import { BITCOIN_COLOR } from "../constants";
+import { BITCOIN_COLOR, BITCOIN_SIGN } from "../constants";
 interface InputPanelProps {
   onCalculate: (data: InputData) => void;
   clearChart: () => void;
@@ -24,7 +24,6 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
   const btcBuyMin: number = 0;
   const btcBuyMax: number = 200000;
   const btcBuyStep: number = 100;
-  const bitcoinSign: string = "₿";
 
   useEffect(() => {
     calculate();
@@ -90,6 +89,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             className="input"
             type="number"
             name="currentAge"
+            max={150}
             value={currentAge}
             onChange={handleCurrentAgeChange}
           />
@@ -109,7 +109,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           <InputNumber
             className="input"
             step={0.01}
-            addonAfter={bitcoinSign}
+            addonAfter={BITCOIN_SIGN}
             name="currentSavings"
             value={currentSavings}
             onChange={(n) => handleChange(n!, setCurrentSavings)}
