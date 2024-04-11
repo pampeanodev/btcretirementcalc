@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { CalculationData } from "../models/CalculationData";
+import { InputData } from "../models/InputData";
 import { Slider, InputNumber, Switch, Popover } from "antd";
 import "./InputPanel.scss";
 import { useTranslation } from "react-i18next";
@@ -7,7 +7,7 @@ import { QuestionCircleTwoTone } from "@ant-design/icons";
 import ExplanatoryOverlay from "./ExplanatoryOverlay";
 import { BITCOIN_COLOR } from "../constants";
 interface InputPanelProps {
-  onCalculate: (data: CalculationData) => void;
+  onCalculate: (data: InputData) => void;
   clearChart: () => void;
 }
 
@@ -15,9 +15,10 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
   const [currentAge, setCurrentAge] = useState<number>(30);
   const [currentSavings, setCurrentSavings] = useState<number>(0.1);
   const [annualDeposit, setAnnualDeposit] = useState<number>(0);
-  const [interestRate, setInterestRate] = useState<number>(12);
+  const [bitcoinPriceAnnualGrowth, setBitcoinPriceAnnualGrowth] = useState<number>(12);
   const [lifeExpectancy, setLifeExpectancy] = useState<number>(86);
-  const [desiredRetirementIncome, setDesiredRetirementIncome] = useState<number>(100000);
+  const [desiredRetirementIncome, setDesiredRetirementIncome] = useState<number>(120000);
+  const [inflationRate, setInflationRate] = useState<number>(2.0);
   const [optimized, setOptimized] = useState(false);
   const [t] = useTranslation();
   const btcBuyMin: number = 0;
@@ -32,9 +33,10 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
     currentAge,
     currentSavings,
     annualDeposit,
-    interestRate,
+    bitcoinPriceAnnualGrowth,
     lifeExpectancy,
     desiredRetirementIncome,
+    inflationRate,
     optimized,
   ]);
 
@@ -71,10 +73,11 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
       currentAge,
       currentSavingsInBitcoin: currentSavings,
       annualBuyInFiat: annualDeposit,
-      annualPriceGrowth: interestRate,
+      annualPriceGrowth: bitcoinPriceAnnualGrowth,
       lifeExpectancy: lifeExpectancy,
       desiredRetirementAnnualBudget: desiredRetirementIncome,
       optimized: optimized,
+      inflationRate: inflationRate,
     });
   };
 
@@ -117,6 +120,8 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           <InputNumber
             name="annualBuy"
             className="input"
+            // formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+            // parser={(value) => value?.replace(/\$\s?|(,*)/g, "") as unknown as number}
             step={btcBuyStep}
             max={btcBuyMax}
             value={annualDeposit}
@@ -125,16 +130,31 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           />
         </div>
         <div className="input-panel__inputs control">
-          <label htmlFor="interestRate">{t("input.growth-rate")}</label>
+          <label htmlFor="growthRate">{t("input.growth-rate")}</label>
           <InputNumber
             type="number"
             className="input"
-            name="interestRate"
+            name="growthRate"
             addonAfter={"%"}
             min={0}
             max={100}
-            value={interestRate}
-            onChange={(n) => handleChange(n!, setInterestRate)}
+            value={bitcoinPriceAnnualGrowth}
+            onChange={(n) => handleChange(n!, setBitcoinPriceAnnualGrowth)}
+          />
+        </div>
+        <div className="input-panel__inputs control">
+          <label htmlFor="inflationRate">{t("input.inflation-rate")}</label>
+          <InputNumber
+            type="number"
+            className="input"
+            name="inflationRate"
+            parser={(value) => parseFloat(value ?? "0").toFixed(1) as unknown as number}
+            addonAfter={"%"}
+            step={0.1}
+            min={0}
+            max={bitcoinPriceAnnualGrowth}
+            value={inflationRate}
+            onChange={(n) => handleChange(n!, setInflationRate)}
           />
         </div>
         <div className="input-panel__inputs control">
@@ -154,6 +174,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           <Slider
             marks={{
               0: `$${btcBuyMin}`,
+              100000: t("slider.annual-buy"),
               200000: `$200K`,
             }}
             step={btcBuyStep}
@@ -162,21 +183,20 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             onChange={(n) => handleChange(n, setAnnualDeposit)}
             value={typeof annualDeposit === "number" ? annualDeposit : 0}
           />
-          <label>{t("input.annual-buy")}</label>
         </div>
         <div className="slider">
           <Slider
             marks={{
               0: "0%",
+              50: t("slider.growth-rate"),
               100: "100%",
             }}
             tooltip={{ color: BITCOIN_COLOR, open: true, placement: "top" }}
             min={0}
             max={100}
-            onChange={(n) => handleChange(n, setInterestRate)}
-            value={typeof interestRate === "number" ? interestRate : 0}
+            onChange={(n) => handleChange(n, setBitcoinPriceAnnualGrowth)}
+            value={typeof bitcoinPriceAnnualGrowth === "number" ? bitcoinPriceAnnualGrowth : 0}
           />
-          <label>{t("input.growth-rate")}</label>
         </div>
         <div className="input-panel__sliders switch">
           <span>{t("input.conservative")}</span>

@@ -7,7 +7,10 @@
   "input.conservative": "Conservative",
   "input.current-age": "Current age:",
   "input.desired-total-savings": "Desired annual retirement income:",
-  "input.growth-rate": "Price annual growth rate:",
+  "input.inflation-rate": "Annual inflation:",
+  "input.growth-rate": "Price annual growth:",
+  "slider.growth-rate": "Price annual growth",
+  "slider.annual-buy": "Annual estimated buy",
   "input.life-expectancy": "Life expectancy:",
   "input.optimized": "Optimized",
   "input.savings-btc": "Amount of ₿itcoin you hodl:",
@@ -24,10 +27,11 @@
   "summary.retirement-age": "Your retirement age:",
   "summary.total-savings": "Total Savings:",
   "table.accumulated-savings": "Fiat savings",
-  "table.accumulated-savings-btc": "BTC savings",
+  "table.accumulated-savings-btc": "₿ savings",
   "table.age": "Age",
   "table.bitcoin-price": "₿itcoin Price",
   "table.not-relevant": "Not relevant",
   "table.year": "Year",
-  "table.you-bought": "₿ you buy"
+  "table.you-bought": "₿ you buy",
+  "table.indexed-budget": "Budget (indexed)"
 }

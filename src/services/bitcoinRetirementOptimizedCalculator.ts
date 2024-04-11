@@ -1,22 +1,26 @@
 import { AnnualBitcoinPrice } from "../models/AnnualBitcoinPrice";
-import { CalculationData } from "../models/CalculationData";
+import { InputData } from "../models/InputData";
 import { CalculationResult } from "../models/CalculationResult";
 
 export const calculateOptimal = (
-  input: CalculationData,
+  input: InputData,
   startingBitcoinPrice: number,
 ): CalculationResult => {
   const growthRate = input.annualPriceGrowth / 100;
   const growthFactor = 1 + growthRate;
+  const inflationRate = input.inflationRate / 100;
+  const inflationFactor = 1 + inflationRate;
   const bitcoinPriceHistory = calculateBitcoinPriceHistory(
     input,
     startingBitcoinPrice,
     growthFactor,
+    inflationFactor,
   );
   const result = estimateRetirementAge(
     input,
     startingBitcoinPrice,
     growthFactor,
+    inflationFactor,
     bitcoinPriceHistory,
   );
 
@@ -24,26 +28,30 @@ export const calculateOptimal = (
 };
 
 const calculateBitcoinPriceHistory = (
-  input: CalculationData,
+  input: InputData,
   bitcoinPrice: number,
   growthFactor: number,
+  inflationFactor: number,
 ) => {
   let year = new Date().getFullYear();
   const priceHistory: AnnualBitcoinPrice[] = [];
+  let currentAnnualBudget = input.desiredRetirementAnnualBudget;
 
   for (let age = input.currentAge + 1; age <= input.lifeExpectancy; age++) {
     year++;
+    currentAnnualBudget = currentAnnualBudget * inflationFactor;
     bitcoinPrice = bitcoinPrice * growthFactor;
 
-    priceHistory.push({ year, age, bitcoinPrice });
+    priceHistory.push({ year, age, bitcoinPrice, desiredAnnualBudget: currentAnnualBudget });
   }
   return priceHistory;
 };
 
 const estimateRetirementAge = (
-  input: CalculationData,
+  input: InputData,
   currentBtcPrice: number,
   growthFactor: number,
+  inflationFactor: number,
   bitcoinPriceHistory: AnnualBitcoinPrice[],
 ) => {
   const calculationResult: CalculationResult = {
@@ -57,19 +65,19 @@ const estimateRetirementAge = (
   };
 
   let accumulatedSavingsBitcoin = input.currentSavingsInBitcoin;
+  let currentDesiredAnnualBudget = input.desiredRetirementAnnualBudget;
+  let currentAnnualBuyInFiat = input.annualBuyInFiat;
   let year = new Date().getFullYear();
 
   for (let age = input.currentAge + 1; age <= input.lifeExpectancy; age++) {
     year++;
     currentBtcPrice = currentBtcPrice * growthFactor;
-    const bitcoinBought = input.annualBuyInFiat / currentBtcPrice;
+    currentDesiredAnnualBudget = currentDesiredAnnualBudget * inflationFactor;
+    currentAnnualBuyInFiat = currentAnnualBuyInFiat * inflationFactor;
+    const bitcoinBought = currentAnnualBuyInFiat / currentBtcPrice;
     accumulatedSavingsBitcoin += bitcoinBought;
 
-    const totalBictoinWillNeed = calculateMoneyWillNeedOverLife(
-      age,
-      input.desiredRetirementAnnualBudget,
-      bitcoinPriceHistory,
-    );
+    const totalBictoinWillNeed = calculateBitcoinWillNeedOverLife(age, bitcoinPriceHistory);
 
     if (totalBictoinWillNeed < accumulatedSavingsBitcoin) {
       calculationResult.retirementAge = age;
@@ -88,6 +96,7 @@ const estimateRetirementAge = (
       savingsFiat: accumulatedSavingsBitcoin * currentBtcPrice,
       bitcoinBought: bitcoinBought,
       bitcoinPrice: currentBtcPrice,
+      annualRetirementBudget: currentDesiredAnnualBudget,
     });
   }
 
@@ -97,9 +106,10 @@ const estimateRetirementAge = (
   }
   for (let age = calculationResult.retirementAge; age <= input.lifeExpectancy; age++) {
     year++;
+
     const priceIndex = age - input.currentAge - 1;
     const dataSetItem = bitcoinPriceHistory[priceIndex];
-    const bitcoinToSell = input.desiredRetirementAnnualBudget / dataSetItem.bitcoinPrice;
+    const bitcoinToSell = dataSetItem.desiredAnnualBudget / dataSetItem.bitcoinPrice;
     remainingSavingsBitcoin -= bitcoinToSell;
     calculationResult.dataSet.push({
       key: year,
@@ -109,20 +119,17 @@ const estimateRetirementAge = (
       savingsFiat: bitcoinToSell * dataSetItem.bitcoinPrice,
       bitcoinBought: -bitcoinToSell,
       bitcoinPrice: dataSetItem.bitcoinPrice,
+      annualRetirementBudget: dataSetItem.desiredAnnualBudget,
     });
   }
   return calculationResult;
 };
 
-const calculateMoneyWillNeedOverLife = (
-  age: number,
-  desiredRetirementAnnualBudget: number,
-  dataset: AnnualBitcoinPrice[],
-): number => {
+const calculateBitcoinWillNeedOverLife = (age: number, dataset: AnnualBitcoinPrice[]): number => {
   return dataset
     .filter((x) => x.age >= age)
     .reduce((sum, item) => {
-      const btcNeededForTheYear = desiredRetirementAnnualBudget / item.bitcoinPrice;
+      const btcNeededForTheYear = item.desiredAnnualBudget / item.bitcoinPrice;
       return sum + btcNeededForTheYear;
     }, 0);
 };
