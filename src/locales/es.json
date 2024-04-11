@@ -3,6 +3,8 @@
   "calculator.chart-view": "Vista Gráfica",
   "calculator.table-view": "Vista de Tabla",
   "chart.title": "Tu predicción de retiro",
+  "donate.donate": "Donar!",
+  "donate.qrcode.title": "Donar con Lightning:",
   "input.annual-buy": "Compra anual estimada:",
   "input.conservative": "Conservadora",
   "input.current-age": "Edad actual:",
@@ -34,7 +36,5 @@
   "table.indexed-budget": "Presupuesto anual",
   "table.not-relevant": "Irrelevante",
   "table.year": "Año",
-  "table.you-bought": "₿ que compras",
-  "donate.qrcode.title": "Donar con Lightning:",
-  "donate.donate": "Donar!"
+  "table.you-bought": "flujos ₿"
 }

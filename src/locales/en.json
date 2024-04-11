@@ -3,6 +3,8 @@
   "calculator.chart-view": "Chart view",
   "calculator.table-view": "Table view",
   "chart.title": "Your retirement prediction",
+  "donate.donate": "Donate!",
+  "donate.qrcode.title": "Donate with Lightning:",
   "input.annual-buy": "Annual estimated buy:",
   "input.conservative": "Conservative",
   "input.current-age": "Current age:",
@@ -34,7 +36,5 @@
   "table.indexed-budget": "Annual Budget",
   "table.not-relevant": "Not relevant",
   "table.year": "Year",
-  "table.you-bought": "₿ you buy",
-  "donate.qrcode.title": "Donate with Lightning:",
-  "donate.donate": "Donate!"
+  "table.you-bought": "₿ flows"
 }
