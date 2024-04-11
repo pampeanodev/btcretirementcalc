@@ -1,8 +1,19 @@
-import { Table, TableProps } from "antd";
+import {
+  Button,
+  Checkbox,
+  CheckboxOptionType,
+  ConfigProvider,
+  Popover,
+  Table,
+  TableProps,
+} from "antd";
 import Summary from "./Summary";
 import { useTranslation } from "react-i18next";
 import { AnnualTrackingData, CalculationResult } from "../models/CalculationResult";
-import { toUsd } from "../constants";
+import { BITCOIN_COLOR, toUsd } from "../constants";
+import { useState } from "react";
+import { SettingOutlined } from "@ant-design/icons";
+import "./TableTab.scss";
 
 const TableTab = ({
   startingBitcoinPrice,
@@ -13,6 +24,7 @@ const TableTab = ({
   dataSet,
 }: CalculationResult) => {
   const [t] = useTranslation();
+
   const columns: TableProps<AnnualTrackingData>["columns"] = [
     {
       title: t("table.year"),
@@ -57,11 +69,25 @@ const TableTab = ({
     {
       title: t("table.indexed-budget"),
       dataIndex: "annualRetirementBudget",
-      width: "8rem",
+      width: "9rem",
       key: "annualRetirementBudget",
       render: (n: number) => <span>{toUsd(n)}</span>,
     },
   ];
+
+  const defaultCheckedList = columns.map((item) => item.key as string);
+  const [checkedList, setCheckedList] = useState(defaultCheckedList);
+
+  const options = columns.map(({ key, title }) => ({
+    label: title,
+    value: key,
+  }));
+
+  const newColumns = columns.map((item) => ({
+    ...item,
+    hidden: !checkedList.includes(item.key as string),
+  }));
+
   return (
     <div>
       <Summary
@@ -74,9 +100,39 @@ const TableTab = ({
       <Table
         style={{ padding: "1rem" }}
         dataSource={dataSet}
-        columns={columns}
+        columns={newColumns}
         pagination={false}
+        bordered
         scroll={{ y: 250 }}
+        footer={() => (
+          <div className="table-tab__config">
+            <ConfigProvider
+              theme={{
+                token: {
+                  colorPrimary: BITCOIN_COLOR,
+                },
+              }}
+            >
+              <Popover
+                content={
+                  <Checkbox.Group
+                    className="table-tab__config options"
+                    value={checkedList}
+                    options={options as CheckboxOptionType[]}
+                    onChange={(value) => {
+                      setCheckedList(value as string[]);
+                    }}
+                  />
+                }
+                placement="topRight"
+                title={t("table.config.title")}
+                trigger="click"
+              >
+                <Button icon={<SettingOutlined></SettingOutlined>}></Button>
+              </Popover>
+            </ConfigProvider>
+          </div>
+        )}
       ></Table>
     </div>
   );

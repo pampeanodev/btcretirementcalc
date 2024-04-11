@@ -8,8 +8,6 @@
   "input.current-age": "Edad actual:",
   "input.desired-total-savings": "Ingreso anual esperado pos-retiro:",
   "input.growth-rate": "Crecimiento anual de precio:",
-  "slider.growth-rate": "Crecimiento de precio",
-  "slider.annual-buy": "Compra anual estimada",
   "input.inflation-rate": "Inflación anual promedio:",
   "input.life-expectancy": "Expectativa de vida:",
   "input.optimized": "Optimizada",
@@ -20,6 +18,8 @@
   "mode-explanation.optimized": "Optimizada:",
   "mode-explanation.optimized-text": "Planeas vender solo el Bitcoin que necesitas cada año basandote en el presupuesto que esperas tener, asi que seguirás teniendo rédito de tus sats hasta el final de tu vida.",
   "mode-explanation.title": "Qué significa ésto?",
+  "slider.annual-buy": "Compra anual estimada",
+  "slider.growth-rate": "Crecimiento de precio",
   "summary.annual-retirement-budget": "Presupuesto anual al retiro:",
   "summary.bitcoin-price": "Precio de ₿itcoin actual:",
   "summary.btc-price-at-retirement": "Precio de ₿itcoin al retirarse:",
@@ -30,8 +30,9 @@
   "table.accumulated-savings-btc": "Ahorros ₿",
   "table.age": "Edad",
   "table.bitcoin-price": "Precio de ₿itcoin",
+  "table.config.title": "Columnas a mostrar",
+  "table.indexed-budget": "Presupuesto anual",
   "table.not-relevant": "Irrelevante",
   "table.year": "Año",
-  "table.you-bought": "₿ que compras",
-  "table.indexed-budget": "Presupuesto (indexado)"
+  "table.you-bought": "₿ que compras"
 }

@@ -1,0 +1,10 @@
+.table-tab__config {
+  display: flex;
+  justify-content: flex-end;
+  &.options {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    max-width: 10rem;
+  }
+}
