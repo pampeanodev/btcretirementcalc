@@ -6,11 +6,11 @@ import { InputData } from "../src/models/InputData.ts";
 test("Calculate should give expected results", () => {
   const expectedCalculation = {
     startingBitcoinPrice: 70000,
-    retirementAge: 63,
-    savingsBitcoin: 1.2734123536000002,
-    savingsFiat: 2070263.8986787011,
-    bitcoinPriceAtRetirementAge: 1625760.8093921517,
-    annualRetirementBudget: 103513.19493393505,
+    retirementAge: 64,
+    savingsBitcoin: 1.27341235,
+    savingsFiat: 2070263.9,
+    bitcoinPriceAtRetirementAge: 1788336.89,
+    annualRetirementBudget: 119857.38,
     dataSet: [],
   };
   const testInput: InputData = {
@@ -41,10 +41,10 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     startingBitcoinPrice: 70000,
     dataSet: [],
     retirementAge: 68,
-    savingsBitcoin: 1.34361637,
-    savingsFiat: 3517996.18,
+    savingsBitcoin: 1.34199525,
+    savingsFiat: 3194319.62,
     bitcoinPriceAtRetirementAge: 2618304.041,
-    annualRetirementBudget: 234533.08,
+    annualRetirementBudget: 234250.11,
   };
   const testInputWithInflation: InputData = {
     currentAge: 30,

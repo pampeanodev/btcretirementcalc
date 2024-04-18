@@ -7,9 +7,9 @@ test("should process input correctly", () => {
   const expectedCalculation = {
     startingBitcoinPrice: 70000,
     retirementAge: 56,
-    savingsBitcoin: 1.261741299174789,
-    savingsFiat: 1052635.888395452,
-    bitcoinPriceAtRetirementAge: 834272.3576409068,
+    savingsBitcoin: 1.259344,
+    savingsFiat: 955123.53,
+    bitcoinPriceAtRetirementAge: 758429.416,
     annualRetirementBudget: 100000,
     dataSet: [],
   };
@@ -42,9 +42,9 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     startingBitcoinPrice: 70000,
     dataSet: [],
     retirementAge: 63,
-    savingsBitcoin: 1.33413558,
-    savingsFiat: 2168985.35,
-    bitcoinPriceAtRetirementAge: 1625760.809,
+    savingsBitcoin: 1.33177087,
+    savingsFiat: 1968309.89,
+    bitcoinPriceAtRetirementAge: 1477964.372,
     annualRetirementBudget: 100000.0,
   };
   const testInputWithInflation: InputData = {
