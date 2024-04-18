@@ -4,7 +4,7 @@ import { calculateOptimal } from "../src/services/bitcoinRetirementOptimizedCalc
 import { InputData } from "../src/models/InputData.ts";
 
 test("should process input correctly", () => {
-  const expectedCalculation = {
+  const expectedCalculation: CalculationResult = {
     startingBitcoinPrice: 70000,
     retirementAge: 56,
     savingsBitcoin: 1.259344,
@@ -12,6 +12,8 @@ test("should process input correctly", () => {
     bitcoinPriceAtRetirementAge: 758429.416,
     annualRetirementBudget: 100000,
     dataSet: [],
+    optimized: true,
+    canRetire: true,
   };
 
   const testInput: InputData = {
@@ -26,6 +28,7 @@ test("should process input correctly", () => {
   };
 
   const output = calculateOptimal(testInput, expectedCalculation.startingBitcoinPrice);
+  expect(output.canRetire).toBe(expectedCalculation.canRetire);
   expect(output.retirementAge).toBe(expectedCalculation.retirementAge);
   expect(output.savingsBitcoin.toFixed(8)).toBe(expectedCalculation.savingsBitcoin.toFixed(8));
   expect(output.savingsFiat.toFixed(2)).toBe(expectedCalculation.savingsFiat.toFixed(2));
@@ -48,6 +51,7 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     annualRetirementBudget: 100000.0,
     annualRetirementBudgetAtRetirementAge: 100000.0,
     optimized: true,
+    canRetire: true,
   };
   const testInputWithInflation: InputData = {
     currentAge: 30,
@@ -60,6 +64,7 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     inflationRate: 2,
   };
   const output = calculateOptimal(testInputWithInflation, expectedCalculation.startingBitcoinPrice);
+  expect(output.canRetire).toBe(expectedCalculation.canRetire);
   expect(output.retirementAge).toBe(expectedCalculation.retirementAge);
   expect(output.savingsBitcoin.toFixed(8)).toBe(expectedCalculation.savingsBitcoin.toFixed(8));
   expect(output.savingsFiat.toFixed(2)).toBe(expectedCalculation.savingsFiat.toFixed(2));
