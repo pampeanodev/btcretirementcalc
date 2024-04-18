@@ -1,7 +1,11 @@
 import { AnnualBitcoinPrice } from "../models/AnnualBitcoinPrice";
 import { InputData } from "../models/InputData";
 import { CalculationResult } from "../models/CalculationResult";
-import { getGrowthFactor, getInflationFactor } from "./calculationUtils";
+import {
+  calculateBitcoinPriceHistory,
+  getGrowthFactor,
+  getInflationFactor,
+} from "./calculationUtils";
 
 export const calculateOptimal = (
   input: InputData,
@@ -26,25 +30,6 @@ export const calculateOptimal = (
   return result;
 };
 
-const calculateBitcoinPriceHistory = (
-  input: InputData,
-  bitcoinPrice: number,
-  growthFactor: number,
-  inflationFactor: number,
-) => {
-  let year = new Date().getFullYear();
-  const priceHistory: AnnualBitcoinPrice[] = [];
-  let currentAnnualBudget = input.desiredRetirementAnnualBudget;
-
-  for (let age = input.currentAge + 1; age <= input.lifeExpectancy; age++) {
-    year++;
-    currentAnnualBudget = currentAnnualBudget * inflationFactor;
-    bitcoinPrice = bitcoinPrice * growthFactor;
-    priceHistory.push({ year, age, bitcoinPrice, desiredAnnualBudget: currentAnnualBudget });
-  }
-  return priceHistory;
-};
-
 const buildRetirementPrediction = (
   input: InputData,
   bitcoinPrice: number,
@@ -55,18 +40,20 @@ const buildRetirementPrediction = (
   const calculationResult: CalculationResult = {
     startingBitcoinPrice: bitcoinPrice,
     dataSet: [],
-    retirementAge: 0,
+    retirementAge: input.lifeExpectancy,
     savingsBitcoin: 0,
     savingsFiat: 0,
     bitcoinPriceAtRetirementAge: 0,
     annualRetirementBudget: 0,
+    annualRetirementBudgetAtRetirementAge: 0,
+    optimized: true,
   };
 
   let year = new Date().getFullYear();
   let accumulatedSavingsBitcoin = input.currentSavingsInBitcoin;
   let indexedDesiredAnnualBudget = input.desiredRetirementAnnualBudget;
   let indexedAnnualBuyInFiat = input.annualBuyInFiat;
-
+  console.log(bitcoinPriceHistory);
   // iterate to find retirement values (age, savings, etc)
   for (let age = input.currentAge + 1; age <= input.lifeExpectancy; age++) {
     // check whether the user has reached as much as they can retire

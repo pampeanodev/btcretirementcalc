@@ -42,14 +42,14 @@ const TableTab = ({
       title: t("table.bitcoin-price"),
       dataIndex: "bitcoinPrice",
       key: "bitcoinPrice",
-      width: "8rem",
+      width: "9rem",
       render: (n: number) => <span>{toUsd(n)}</span>,
     },
     {
       title: t("table.accumulated-savings"),
       dataIndex: "savingsFiat",
       key: "savingsFiat",
-      width: "8rem",
+      width: "9rem",
       render: (n: number) => (n === 0 ? <>{t("table.not-relevant")}</> : <span>{toUsd(n)}</span>),
     },
     {

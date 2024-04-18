@@ -10,7 +10,7 @@ test("Calculate should give expected results", () => {
     savingsBitcoin: 1.27341235,
     savingsFiat: 2070263.9,
     bitcoinPriceAtRetirementAge: 1788336.89,
-    annualRetirementBudget: 119857.38,
+    annualRetirementBudget: 108961.26,
     dataSet: [],
   };
   const testInput: InputData = {
@@ -40,11 +40,13 @@ test("Calculation with 2 percent inflation should give expected results", () => 
   const expectedCalculation: CalculationResult = {
     startingBitcoinPrice: 70000,
     dataSet: [],
-    retirementAge: 68,
-    savingsBitcoin: 1.34199525,
-    savingsFiat: 3194319.62,
-    bitcoinPriceAtRetirementAge: 2618304.041,
-    annualRetirementBudget: 234250.11,
+    retirementAge: 70,
+    savingsBitcoin: 1.3451196,
+    savingsFiat: 3874125.29,
+    bitcoinPriceAtRetirementAge: 3168147.89,
+    annualRetirementBudget: 298009.64,
+    annualRetirementBudgetAtRetirementAge: 220803.97,
+    optimized: false,
   };
   const testInputWithInflation: InputData = {
     currentAge: 30,
@@ -65,5 +67,8 @@ test("Calculation with 2 percent inflation should give expected results", () => 
   );
   expect(output.annualRetirementBudget.toFixed(2)).toBe(
     expectedCalculation.annualRetirementBudget.toFixed(2),
+  );
+  expect(output.annualRetirementBudgetAtRetirementAge?.toFixed(2)).toBe(
+    expectedCalculation.annualRetirementBudgetAtRetirementAge?.toFixed(2),
   );
 });
