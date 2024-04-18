@@ -47,6 +47,7 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     bitcoinPriceAtRetirementAge: 1477964.372,
     annualRetirementBudget: 100000.0,
     annualRetirementBudgetAtRetirementAge: 100000.0,
+    optimized: true,
   };
   const testInputWithInflation: InputData = {
     currentAge: 30,
