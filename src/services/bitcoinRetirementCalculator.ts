@@ -60,7 +60,6 @@ const buildRetirementPrediction = (
     indexedDesiredAnnualBudget = indexedDesiredAnnualBudget * inflationFactor;
     yearsToLive = input.lifeExpectancy - age;
     const newPendingSavingsFiat = calculateFiatWillNeedOverLife(age, bitcoinPriceHistory);
-    // TODO: calculate pending savings considering inflation by year
     pendingSavingsFiat = newPendingSavingsFiat - accumulatedSavingsFiat;
 
     // check whether the user has reached as much as they can retire

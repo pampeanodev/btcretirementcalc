@@ -53,7 +53,6 @@ const buildRetirementPrediction = (
   let accumulatedSavingsBitcoin = input.currentSavingsInBitcoin;
   let indexedDesiredAnnualBudget = input.desiredRetirementAnnualBudget;
   let indexedAnnualBuyInFiat = input.annualBuyInFiat;
-  console.log(bitcoinPriceHistory);
   // iterate to find retirement values (age, savings, etc)
   for (let age = input.currentAge + 1; age <= input.lifeExpectancy; age++) {
     // check whether the user has reached as much as they can retire
