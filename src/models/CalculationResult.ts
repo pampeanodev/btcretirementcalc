@@ -8,6 +8,7 @@ export interface CalculationResult {
   bitcoinPriceAtRetirementAge: number;
   annualRetirementBudget: number;
   optimized: boolean;
+  canRetire: boolean;
 }
 
 export interface AnnualTrackingData {

@@ -47,6 +47,7 @@ const buildRetirementPrediction = (
     annualRetirementBudget: 0,
     annualRetirementBudgetAtRetirementAge: 0,
     optimized: true,
+    canRetire: false,
   };
 
   let year = new Date().getFullYear();
@@ -66,6 +67,7 @@ const buildRetirementPrediction = (
       calculationResult.bitcoinPriceAtRetirementAge = bitcoinPrice;
       calculationResult.savingsBitcoin = accumulatedSavingsBitcoin;
       calculationResult.savingsFiat = accumulatedSavingsBitcoin * bitcoinPrice;
+      calculationResult.canRetire = true;
       break;
     }
 
@@ -93,7 +95,7 @@ const buildRetirementPrediction = (
   }
 
   // didn't find a retirement age skip pos retirement calculations
-  if (calculationResult.retirementAge == 0) {
+  if (!calculationResult.canRetire) {
     return calculationResult;
   }
   // pos-retirement calculations

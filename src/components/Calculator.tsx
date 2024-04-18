@@ -24,6 +24,7 @@ const Calculator = () => {
   const [chartData, setChartData] = useState<LineChartProps>();
   const [tableData, setTableData] = useState<AnnualTrackingData[]>([]);
   const [optimized, setOptimized] = useState<boolean>(false);
+  const [canRetire, setCanRetire] = useState<boolean>(false);
   const [t] = useTranslation();
 
   const interval = 1000 * 60 * 10;
@@ -68,6 +69,7 @@ const Calculator = () => {
           dataSet={tableData!}
           savingsBitcoin={savingsBitcoin}
           optimized={optimized}
+          canRetire={canRetire}
         />
       ),
     },
@@ -107,9 +109,10 @@ const Calculator = () => {
     setSavingsBitcoin(calculationResult.savingsBitcoin);
     setBitcoinPriceAtRetirement(calculationResult.bitcoinPriceAtRetirementAge);
     setAnnualBudget(calculationResult.annualRetirementBudget);
+    setOptimized(data.optimized);
+    setCanRetire(calculationResult.canRetire);
 
     setTableData(calculationResult.dataSet);
-    setOptimized(data.optimized);
 
     updateChartWithAfterRetirementData(calculationResult, data);
   };

@@ -47,6 +47,7 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     annualRetirementBudget: 298009.64,
     annualRetirementBudgetAtRetirementAge: 220803.97,
     optimized: false,
+    canRetire: true,
   };
   const testInputWithInflation: InputData = {
     currentAge: 30,
@@ -59,6 +60,7 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     inflationRate: 2,
   };
   const output = calculate(testInputWithInflation, expectedCalculation.startingBitcoinPrice);
+  expect(output.canRetire).toBe(expectedCalculation.canRetire);
   expect(output.retirementAge).toBe(expectedCalculation.retirementAge);
   expect(output.savingsBitcoin.toFixed(8)).toBe(expectedCalculation.savingsBitcoin.toFixed(8));
   expect(output.savingsFiat.toFixed(2)).toBe(expectedCalculation.savingsFiat.toFixed(2));

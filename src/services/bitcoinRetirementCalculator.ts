@@ -42,6 +42,7 @@ const buildRetirementPrediction = (
     annualRetirementBudget: 0,
     annualRetirementBudgetAtRetirementAge: 0,
     optimized: false,
+    canRetire: false,
   };
 
   let year = new Date().getFullYear();
@@ -64,6 +65,7 @@ const buildRetirementPrediction = (
 
     // check whether the user has reached as much as they can retire
     if (pendingSavingsFiat <= 0) {
+      calculationResult.canRetire = true;
       const yearsAfterRetirement = input.lifeExpectancy - age;
       calculationResult.annualRetirementBudget = accumulatedSavingsFiat / yearsAfterRetirement;
       calculationResult.annualRetirementBudgetAtRetirementAge = indexedDesiredAnnualBudget;
