@@ -1,5 +1,5 @@
-import InfoBox from "./InfoBox";
-import { toBtc, toUsd } from "../constants";
+import InfoBox from "../InfoBox";
+import { toBtc, toUsd } from "../../../constants";
 import { useTranslation } from "react-i18next";
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
   annualBudget: number;
 };
 
-const Summary = ({
+const OptimizedSummary = ({
   retirementAge,
   totalSavings,
   bitcoinPriceAtRetirement,
@@ -47,4 +47,4 @@ const Summary = ({
   );
 };
 
-export default Summary;
+export default OptimizedSummary;

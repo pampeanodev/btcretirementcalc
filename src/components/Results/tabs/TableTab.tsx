@@ -7,22 +7,14 @@ import {
   Table,
   TableProps,
 } from "antd";
-import Summary from "./Summary";
 import { useTranslation } from "react-i18next";
-import { AnnualTrackingData, CalculationResult } from "../models/CalculationResult";
-import { BITCOIN_COLOR, toUsd } from "../constants";
+import { AnnualTrackingData, CalculationResult } from "../../../models/CalculationResult";
+import { BITCOIN_COLOR, toUsd } from "../../../constants";
 import { useState } from "react";
 import { SettingOutlined } from "@ant-design/icons";
 import "./TableTab.scss";
 
-const TableTab = ({
-  startingBitcoinPrice,
-  bitcoinPriceAtRetirementAge,
-  retirementAge,
-  savingsBitcoin,
-  annualRetirementBudget,
-  dataSet,
-}: CalculationResult) => {
+const TableTab = ({ dataSet }: CalculationResult) => {
   const [t] = useTranslation();
 
   const columns: TableProps<AnnualTrackingData>["columns"] = [
@@ -90,13 +82,6 @@ const TableTab = ({
 
   return (
     <div>
-      <Summary
-        bitcoinPrice={startingBitcoinPrice}
-        retirementAge={retirementAge}
-        totalSavings={savingsBitcoin}
-        bitcoinPriceAtRetirement={bitcoinPriceAtRetirementAge}
-        annualBudget={annualRetirementBudget}
-      ></Summary>
       <Table
         style={{ padding: "1rem" }}
         dataSource={dataSet}

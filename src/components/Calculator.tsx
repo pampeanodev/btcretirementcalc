@@ -2,18 +2,15 @@ import { useState } from "react";
 import "chart.js/auto";
 import "./Calculator.scss";
 import { useBitcoinPrice } from "../hooks/useBitcoinPrice";
-import InputPanel from "./InputPanel";
+import InputPanel from "./Input/InputPanel";
 import { InputData } from "../models/InputData";
-import { useTranslation } from "react-i18next";
-import ChartTab from "./ChartTab";
-import { Spin, Tabs, TabsProps } from "antd";
+import { Spin } from "antd";
 import { LineChartProps, LineChartData } from "../models/LineChartProps";
-import TableTab from "./TableTab";
-import { TableOutlined, AreaChartOutlined } from "@ant-design/icons";
 import { AnnualTrackingData, CalculationResult } from "../models/CalculationResult";
 import { calculateOptimal } from "../services/bitcoinRetirementOptimizedCalculator";
 import { calculate } from "../services/bitcoinRetirementCalculator";
 import { BITCOIN_COLOR } from "../constants";
+import Result from "./Results/tabs/Result";
 
 const Calculator = () => {
   const [savingsBitcoin, setSavingsBitcoin] = useState<number>(0);
@@ -25,7 +22,6 @@ const Calculator = () => {
   const [tableData, setTableData] = useState<AnnualTrackingData[]>([]);
   const [optimized, setOptimized] = useState<boolean>(false);
   const [canRetire, setCanRetire] = useState<boolean>(false);
-  const [t] = useTranslation();
 
   const interval = 1000 * 60 * 10;
   const btcPrice = useBitcoinPrice(interval);
@@ -38,42 +34,6 @@ const Calculator = () => {
     const years = Array.from(new Array(end - start));
     return years.map((_, i) => (i + start + 1).toString());
   };
-
-  const tabs: TabsProps["items"] = [
-    {
-      key: "1",
-      label: t("calculator.chart-view"),
-      icon: <AreaChartOutlined />,
-      children: (
-        <ChartTab
-          bitcoinPrice={btcPrice!}
-          retirementAge={retirementAge}
-          annualBudget={annualBudget}
-          bitcoinPriceAtRetirement={bitcoinPriceAtRetirement}
-          totalSavings={savingsBitcoin}
-          chartProps={chartData!}
-        />
-      ),
-    },
-    {
-      key: "2",
-      label: t("calculator.table-view"),
-      icon: <TableOutlined />,
-      children: (
-        <TableTab
-          startingBitcoinPrice={btcPrice!}
-          retirementAge={retirementAge}
-          annualRetirementBudget={annualBudget}
-          bitcoinPriceAtRetirementAge={bitcoinPriceAtRetirement}
-          savingsFiat={savingsFiat}
-          dataSet={tableData!}
-          savingsBitcoin={savingsBitcoin}
-          optimized={optimized}
-          canRetire={canRetire}
-        />
-      ),
-    },
-  ];
 
   const setChartProps = (fiatDataSet: number[], btcDataSet: number[], labels: string[]) => {
     const dataSets: LineChartData[] = [];
@@ -138,7 +98,20 @@ const Calculator = () => {
             clearChart={clearChart}
           ></InputPanel>
           <div className="calculator__result">
-            {chartData && tableData && <Tabs defaultActiveKey="1" items={tabs} />}
+            {chartData && tableData && (
+              <Result
+                btcPrice={btcPrice}
+                retirementAge={retirementAge}
+                annualBudget={annualBudget}
+                bitcoinPriceAtRetirement={bitcoinPriceAtRetirement}
+                savingsBitcoin={savingsBitcoin}
+                savingsFiat={savingsFiat}
+                chartData={chartData}
+                tableData={tableData}
+                optimized={optimized}
+                canRetire={canRetire}
+              />
+            )}
           </div>
         </div>
       ) : (

@@ -94,7 +94,10 @@ const buildRetirementPrediction = (
       annualRetirementBudget: indexedDesiredAnnualBudget,
     });
   }
-
+  // didn't find a retirement age skip pos retirement calculations
+  if (!calculationResult.canRetire) {
+    return calculationResult;
+  }
   // pos-retirement calculations
   let remainingSavingsFiat = calculationResult.savingsFiat;
   for (let age = calculationResult.retirementAge; age < input.lifeExpectancy; age++) {

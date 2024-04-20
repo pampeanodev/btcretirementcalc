@@ -1,11 +1,11 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { InputData } from "../models/InputData";
+import { InputData } from "../../models/InputData";
 import { Slider, InputNumber, Switch, Popover } from "antd";
 import "./InputPanel.scss";
 import { useTranslation } from "react-i18next";
 import { QuestionCircleTwoTone } from "@ant-design/icons";
 import ExplanatoryOverlay from "./ExplanatoryOverlay";
-import { BITCOIN_COLOR, BITCOIN_SIGN } from "../constants";
+import { BITCOIN_COLOR, BITCOIN_SIGN } from "../../constants";
 interface InputPanelProps {
   onCalculate: (data: InputData) => void;
   clearChart: () => void;
@@ -120,8 +120,6 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           <InputNumber
             name="annualBuy"
             className="input"
-            // formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-            // parser={(value) => value?.replace(/\$\s?|(,*)/g, "") as unknown as number}
             step={btcBuyStep}
             max={btcBuyMax}
             value={annualDeposit}
