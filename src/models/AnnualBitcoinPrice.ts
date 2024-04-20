@@ -1,6 +1,6 @@
 export interface AnnualBitcoinPrice {
   year: number;
   age: number;
-  bitcoinPrice: number;
-  desiredAnnualBudget: number;
+  bitcoinPriceIndexed: number;
+  desiredAnnualBudgetIndexed: number;
 }

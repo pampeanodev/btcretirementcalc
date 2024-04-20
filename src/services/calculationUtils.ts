@@ -26,7 +26,12 @@ export const calculateBitcoinPriceHistory = (
     year++;
     currentAnnualBudget = currentAnnualBudget * inflationFactor;
     bitcoinPrice = bitcoinPrice * growthFactor;
-    priceHistory.push({ year, age, bitcoinPrice, desiredAnnualBudget: currentAnnualBudget });
+    priceHistory.push({
+      year,
+      age,
+      bitcoinPriceIndexed: bitcoinPrice,
+      desiredAnnualBudgetIndexed: currentAnnualBudget,
+    });
   }
   return priceHistory;
 };

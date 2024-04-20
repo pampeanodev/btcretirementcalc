@@ -34,12 +34,12 @@ const OptimizedSummary = ({
         <InfoBox label={t("summary.bitcoin-price")} value={toUsd(bitcoinPrice)} type="info" />
         <InfoBox
           label={t("summary.annual-retirement-budget")}
-          value={toUsd(annualBudget)}
+          value={toBtc(annualBudget)}
           type={onTrack ? "success" : "danger"}
         />
         <InfoBox
           label={t("summary.monthly-retirement-budget")}
-          value={toUsd(annualBudget / 12)}
+          value={toBtc(annualBudget / 12)}
           type={onTrack ? "success" : "danger"}
         />
       </div>
