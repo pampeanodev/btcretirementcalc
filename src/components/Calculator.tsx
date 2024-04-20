@@ -81,7 +81,7 @@ const Calculator = () => {
     calculationResult: CalculationResult,
     data: InputData,
   ) {
-    const btcDataSet = calculationResult.dataSet.map((item) => item.savingsBtc);
+    const btcDataSet = calculationResult.dataSet.map((item) => item.savingsBitcoin);
     const fiatDataSet = data.optimized
       ? []
       : calculationResult.dataSet.map((item) => item.savingsFiat);

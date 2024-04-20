@@ -75,9 +75,9 @@ const buildRetirementPrediction = (
       key: dataSetItem.year,
       year: dataSetItem.year,
       age: dataSetItem.age,
-      savingsBtc: accumulatedSavingsBitcoin,
+      savingsBitcoin: accumulatedSavingsBitcoin,
       savingsFiat: accumulatedSavingsFiat,
-      bitcoinBought: bitcoinToBuy,
+      bitcoinFlow: bitcoinToBuy,
       bitcoinPrice: dataSetItem.bitcoinPriceIndexed,
       annualRetirementBudget: dataSetItem.desiredAnnualBudgetIndexed,
     });
@@ -134,9 +134,9 @@ const buildRetirementPrediction = (
       key: dataSetItem.year,
       year: dataSetItem.year,
       age: dataSetItem.age,
-      savingsBtc: 0,
+      savingsBitcoin: 0,
       savingsFiat: remainingSavingsFiat,
-      bitcoinBought:
+      bitcoinFlow:
         dataSetItem.age == calculationResult.retirementAge ? -calculationResult.savingsBitcoin : 0,
       bitcoinPrice: dataSetItem.bitcoinPriceIndexed,
       annualRetirementBudget: dataSetItem.desiredAnnualBudgetIndexed,

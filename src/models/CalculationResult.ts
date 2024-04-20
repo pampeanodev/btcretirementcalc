@@ -15,9 +15,9 @@ export interface AnnualTrackingData {
   key: number;
   year: number;
   age: number;
-  savingsBtc: number;
+  savingsBitcoin: number;
   savingsFiat: number;
-  bitcoinBought: number;
+  bitcoinFlow: number;
   bitcoinPrice: number;
   annualRetirementBudget: number;
 }
