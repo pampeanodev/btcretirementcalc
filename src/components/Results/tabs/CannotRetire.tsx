@@ -6,6 +6,7 @@ const CannotRetire = () => {
     <>
       <div className="wont-retire">
         <span className="wont-retire__text">{t("cannot-retire.text")}</span>
+        <p style={{ fontStyle: "italic" }}>{t("cannot-retire.text2")}</p>
       </div>
     </>
   );
