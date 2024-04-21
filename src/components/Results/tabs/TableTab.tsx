@@ -46,14 +46,14 @@ const TableTab = ({ dataSet }: CalculationResult) => {
     },
     {
       title: t("table.accumulated-savings-btc"),
-      dataIndex: "savingsBtc",
+      dataIndex: "savingsBitcoin",
       key: "savingsBtc",
       width: "8rem",
       render: (n: number) => <>{n.toFixed(8)}</>,
     },
     {
       title: t("table.you-bought"),
-      dataIndex: "bitcoinBought",
+      dataIndex: "bitcoinFlow",
       width: "8rem",
       key: "bitcoinBought",
       render: (n: number) => <span>{n.toFixed(8)}</span>,
@@ -67,15 +67,15 @@ const TableTab = ({ dataSet }: CalculationResult) => {
     },
   ];
 
-  const defaultCheckedList = columns.map((item) => item.key as string);
+  const defaultCheckedList = columns!.map((item) => item.key as string);
   const [checkedList, setCheckedList] = useState(defaultCheckedList);
 
-  const options = columns.map(({ key, title }) => ({
+  const options = columns!.map(({ key, title }) => ({
     label: title,
     value: key,
   }));
 
-  const newColumns = columns.map((item) => ({
+  const newColumns = columns!.map((item) => ({
     ...item,
     hidden: !checkedList.includes(item.key as string),
   }));
