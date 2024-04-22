@@ -28,13 +28,15 @@
   "summary.monthly-retirement-budget": "Monthly Retirement Budget:",
   "summary.retirement-age": "Your retirement age:",
   "summary.total-savings": "Total Savings:",
-  "table.accumulated-savings": "Fiat savings",
-  "table.accumulated-savings-btc": "₿ savings",
+  "table.accumulated-savings": "$ Savings",
+  "table.accumulated-savings-btc": "₿ Savings",
   "table.age": "Age",
-  "table.bitcoin-price": "₿itcoin Price",
+  "table.bitcoin-price": "₿ Price",
   "table.config.title": "Columns to display",
   "table.indexed-budget": "Annual Budget",
   "table.not-relevant": "Not relevant",
   "table.year": "Year",
-  "table.you-bought": "₿ flows"
+  "table.you-bought": "₿ flows",
+  "cannot-retire.text": "Unfortunately you are not gonna make it at this time.",
+  "cannot-retire.text2": "Stay humble, and keep stacking  sats."
 }

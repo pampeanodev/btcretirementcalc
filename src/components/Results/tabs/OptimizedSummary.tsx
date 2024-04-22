@@ -1,5 +1,5 @@
-import InfoBox from "./InfoBox";
-import { toBtc, toUsd } from "../constants";
+import InfoBox from "../InfoBox";
+import { toBtc, toUsd } from "../../../constants";
 import { useTranslation } from "react-i18next";
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
   annualBudget: number;
 };
 
-const Summary = ({
+const OptimizedSummary = ({
   retirementAge,
   totalSavings,
   bitcoinPriceAtRetirement,
@@ -34,12 +34,12 @@ const Summary = ({
         <InfoBox label={t("summary.bitcoin-price")} value={toUsd(bitcoinPrice)} type="info" />
         <InfoBox
           label={t("summary.annual-retirement-budget")}
-          value={toUsd(annualBudget)}
+          value={toBtc(annualBudget)}
           type={onTrack ? "success" : "danger"}
         />
         <InfoBox
           label={t("summary.monthly-retirement-budget")}
-          value={toUsd(annualBudget / 12)}
+          value={toBtc(annualBudget / 12)}
           type={onTrack ? "success" : "danger"}
         />
       </div>
@@ -47,4 +47,4 @@ const Summary = ({
   );
 };
 
-export default Summary;
+export default OptimizedSummary;

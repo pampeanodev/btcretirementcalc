@@ -39,3 +39,21 @@
     flex-grow: 1;
   }
 }
+
+.wont-retire {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+
+  &__text {
+    font-size: larger;
+    font-weight: 800;
+  }
+}
+
+.wont-retire>p {
+  font-style: italic;
+}
+

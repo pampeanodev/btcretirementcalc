@@ -7,22 +7,14 @@ import {
   Table,
   TableProps,
 } from "antd";
-import Summary from "./Summary";
 import { useTranslation } from "react-i18next";
-import { AnnualTrackingData, CalculationResult } from "../models/CalculationResult";
-import { BITCOIN_COLOR, toUsd } from "../constants";
+import { AnnualTrackingData, CalculationResult } from "../../../models/CalculationResult";
+import { BITCOIN_COLOR, toUsd } from "../../../constants";
 import { useState } from "react";
 import { SettingOutlined } from "@ant-design/icons";
 import "./TableTab.scss";
 
-const TableTab = ({
-  startingBitcoinPrice,
-  bitcoinPriceAtRetirementAge,
-  retirementAge,
-  savingsBitcoin,
-  annualRetirementBudget,
-  dataSet,
-}: CalculationResult) => {
+const TableTab = ({ dataSet }: CalculationResult) => {
   const [t] = useTranslation();
 
   const columns: TableProps<AnnualTrackingData>["columns"] = [
@@ -42,26 +34,26 @@ const TableTab = ({
       title: t("table.bitcoin-price"),
       dataIndex: "bitcoinPrice",
       key: "bitcoinPrice",
-      width: "8rem",
+      width: "9rem",
       render: (n: number) => <span>{toUsd(n)}</span>,
     },
     {
       title: t("table.accumulated-savings"),
       dataIndex: "savingsFiat",
       key: "savingsFiat",
-      width: "8rem",
+      width: "9rem",
       render: (n: number) => (n === 0 ? <>{t("table.not-relevant")}</> : <span>{toUsd(n)}</span>),
     },
     {
       title: t("table.accumulated-savings-btc"),
-      dataIndex: "savingsBtc",
+      dataIndex: "savingsBitcoin",
       key: "savingsBtc",
       width: "8rem",
       render: (n: number) => <>{n.toFixed(8)}</>,
     },
     {
       title: t("table.you-bought"),
-      dataIndex: "bitcoinBought",
+      dataIndex: "bitcoinFlow",
       width: "8rem",
       key: "bitcoinBought",
       render: (n: number) => <span>{n.toFixed(8)}</span>,
@@ -75,28 +67,21 @@ const TableTab = ({
     },
   ];
 
-  const defaultCheckedList = columns.map((item) => item.key as string);
+  const defaultCheckedList = columns!.map((item) => item.key as string);
   const [checkedList, setCheckedList] = useState(defaultCheckedList);
 
-  const options = columns.map(({ key, title }) => ({
+  const options = columns!.map(({ key, title }) => ({
     label: title,
     value: key,
   }));
 
-  const newColumns = columns.map((item) => ({
+  const newColumns = columns!.map((item) => ({
     ...item,
     hidden: !checkedList.includes(item.key as string),
   }));
 
   return (
     <div>
-      <Summary
-        bitcoinPrice={startingBitcoinPrice}
-        retirementAge={retirementAge}
-        totalSavings={savingsBitcoin}
-        bitcoinPriceAtRetirement={bitcoinPriceAtRetirementAge}
-        annualBudget={annualRetirementBudget}
-      ></Summary>
       <Table
         style={{ padding: "1rem" }}
         dataSource={dataSet}

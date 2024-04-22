@@ -1,4 +1,5 @@
 export interface CalculationResult {
+  annualRetirementBudgetAtRetirementAge?: number;
   startingBitcoinPrice: number;
   dataSet: AnnualTrackingData[];
   retirementAge: number;
@@ -6,15 +7,17 @@ export interface CalculationResult {
   savingsFiat: number;
   bitcoinPriceAtRetirementAge: number;
   annualRetirementBudget: number;
+  optimized: boolean;
+  canRetire: boolean;
 }
 
 export interface AnnualTrackingData {
   key: number;
   year: number;
   age: number;
-  savingsBtc: number;
+  savingsBitcoin: number;
   savingsFiat: number;
-  bitcoinBought: number;
+  bitcoinFlow: number;
   bitcoinPrice: number;
   annualRetirementBudget: number;
 }

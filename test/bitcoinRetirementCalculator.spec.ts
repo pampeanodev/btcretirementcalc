@@ -6,11 +6,11 @@ import { InputData } from "../src/models/InputData.ts";
 test("Calculate should give expected results", () => {
   const expectedCalculation = {
     startingBitcoinPrice: 70000,
-    retirementAge: 63,
-    savingsBitcoin: 1.2734123536000002,
-    savingsFiat: 2070263.8986787011,
-    bitcoinPriceAtRetirementAge: 1625760.8093921517,
-    annualRetirementBudget: 103513.19493393505,
+    retirementAge: 64,
+    savingsBitcoin: 1.27341235,
+    savingsFiat: 2277290.29,
+    bitcoinPriceAtRetirementAge: 1788336.89,
+    annualRetirementBudget: 119857.38,
     dataSet: [],
   };
   const testInput: InputData = {
@@ -40,11 +40,14 @@ test("Calculation with 2 percent inflation should give expected results", () => 
   const expectedCalculation: CalculationResult = {
     startingBitcoinPrice: 70000,
     dataSet: [],
-    retirementAge: 68,
+    retirementAge: 69,
     savingsBitcoin: 1.34361637,
-    savingsFiat: 3517996.18,
-    bitcoinPriceAtRetirementAge: 2618304.041,
-    annualRetirementBudget: 234533.08,
+    savingsFiat: 3869795.8,
+    bitcoinPriceAtRetirementAge: 2880134.445,
+    annualRetirementBudget: 276413.99,
+    annualRetirementBudgetAtRetirementAge: 216474.48,
+    optimized: false,
+    canRetire: true,
   };
   const testInputWithInflation: InputData = {
     currentAge: 30,
@@ -57,6 +60,7 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     inflationRate: 2,
   };
   const output = calculate(testInputWithInflation, expectedCalculation.startingBitcoinPrice);
+  expect(output.canRetire).toBe(expectedCalculation.canRetire);
   expect(output.retirementAge).toBe(expectedCalculation.retirementAge);
   expect(output.savingsBitcoin.toFixed(8)).toBe(expectedCalculation.savingsBitcoin.toFixed(8));
   expect(output.savingsFiat.toFixed(2)).toBe(expectedCalculation.savingsFiat.toFixed(2));
@@ -65,5 +69,8 @@ test("Calculation with 2 percent inflation should give expected results", () => 
   );
   expect(output.annualRetirementBudget.toFixed(2)).toBe(
     expectedCalculation.annualRetirementBudget.toFixed(2),
+  );
+  expect(output.annualRetirementBudgetAtRetirementAge?.toFixed(2)).toBe(
+    expectedCalculation.annualRetirementBudgetAtRetirementAge?.toFixed(2),
   );
 });

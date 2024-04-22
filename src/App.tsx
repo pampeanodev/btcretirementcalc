@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import "./App.scss";
 import Calculator from "./components/Calculator";
-import Donate from "./components/Donate";
+import Donate from "./components/Misc/Donate";
 import { GithubOutlined, TwitterOutlined } from "@ant-design/icons";
 
 function App() {

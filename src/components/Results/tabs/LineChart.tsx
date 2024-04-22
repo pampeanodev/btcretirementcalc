@@ -2,7 +2,7 @@ import { useRef } from "react";
 import Chart from "chart.js/auto";
 import { Line } from "react-chartjs-2";
 import { useTranslation } from "react-i18next";
-import { LineChartProps } from "../models/LineChartProps";
+import { LineChartProps } from "../../../models/LineChartProps";
 
 const LineChart = (chartData: LineChartProps) => {
   const chartRef = useRef<Chart<"line">>();

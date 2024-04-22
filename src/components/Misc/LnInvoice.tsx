@@ -16,7 +16,6 @@ const LnInvoice = () => {
     const invoice = await ln.requestInvoice({ satoshi: amount });
 
     setLnRequest(invoice.paymentRequest);
-    console.log(invoice.paymentRequest);
   };
   return (
     <div>
