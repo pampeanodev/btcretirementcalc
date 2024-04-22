@@ -1,6 +1,11 @@
 .infobox {
+  display: flex;
   padding: 0.5rem 0.5rem;
   font-size: medium;
+  @media (max-width: 400px) {
+      display: flex;
+      flex-direction: column;
+  }
 
   :last-child {
     padding-left: 0.4rem;

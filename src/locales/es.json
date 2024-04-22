@@ -2,6 +2,8 @@
   "app.title": "Calculadora de retiro Bitcoin",
   "calculator.chart-view": "Vista Gráfica",
   "calculator.table-view": "Vista de Tabla",
+  "cannot-retire.text": "Lamentablemente no podrás lograrlo esta vez.",
+  "cannot-retire.text2": "Stay humble, and keep stacking  sats.",
   "chart.title": "Tu predicción de retiro",
   "donate.donate": "Donar!",
   "donate.qrcode.title": "Donar con Lightning:",
@@ -36,7 +38,5 @@
   "table.indexed-budget": "Presupuesto anual",
   "table.not-relevant": "Irrelevante",
   "table.year": "Año",
-  "table.you-bought": "flujos ₿",
-  "cannot-retire.text": "Lamentablemente no podrás lograrlo esta vez.",
-  "cannot-retire.text2": "Stay humble, and keep stacking  sats."
+  "table.you-bought": "flujos ₿"
 }

@@ -2,6 +2,8 @@
   "app.title": "Bitcoin Retirement Calculator",
   "calculator.chart-view": "Chart view",
   "calculator.table-view": "Table view",
+  "cannot-retire.text": "Unfortunately you are not gonna make it at this time.",
+  "cannot-retire.text2": "Stay humble, and keep stacking  sats.",
   "chart.title": "Your retirement prediction",
   "donate.donate": "Donate!",
   "donate.qrcode.title": "Donate with Lightning:",
@@ -36,7 +38,5 @@
   "table.indexed-budget": "Annual Budget",
   "table.not-relevant": "Not relevant",
   "table.year": "Year",
-  "table.you-bought": "₿ flows",
-  "cannot-retire.text": "Unfortunately you are not gonna make it at this time.",
-  "cannot-retire.text2": "Stay humble, and keep stacking  sats."
+  "table.you-bought": "₿ flows"
 }
