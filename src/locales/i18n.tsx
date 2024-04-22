@@ -2,6 +2,7 @@ import i18next from "i18next";
 
 import translationEnglish from "./en.json";
 import translationSpanish from "./es.json";
+import translationPortuguese from "./pt.json";
 
 export const resources = {
   en: {
@@ -9,6 +10,9 @@ export const resources = {
   },
   es: {
     translation: translationSpanish,
+  },
+  pt: {
+    translation: translationPortuguese,
   },
 };
 
