@@ -58,6 +58,12 @@ function App() {
             <a target="blank" href="https://x.com/pampeanodev">
               <TwitterOutlined width={10} />
             </a>
+            <a
+              target="blank"
+              href="https://primal.net/p/npub16r9fy3936x9pf9sk020zt48ntpp809lk9xf5wldzhlqu7x8y3t9shy8j7x"
+            >
+              <img src="https://nostr.how/images/nostrich-150.webp" width={16} />
+            </a>
             <a target="_blank" href="https://github.com/pampeanodev/btcretirementcalc">
               <GithubOutlined width={10}></GithubOutlined>
             </a>
