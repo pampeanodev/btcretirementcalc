@@ -8,10 +8,10 @@ import { useLayoutEffect, useState } from "react";
 import useLocalStorage from "use-local-storage";
 
 function App() {
-  const [useDarkMode, setUseDarkMode] = useState(false);
   const [t] = useTranslation();
   const defaultDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   const [userTheme, setUserTheme] = useLocalStorage("theme", defaultDark ? "dark" : "light");
+  const [useDarkMode, setUseDarkMode] = useState(defaultDark);
 
   const toggleDarkMode = (darkMode: boolean) => {
     setUseDarkMode(darkMode);
