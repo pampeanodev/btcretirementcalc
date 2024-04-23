@@ -4,6 +4,11 @@
   text-align: center;
 }
 
+body.dark {
+  background-color: #1f2023;
+  color: #dadada;
+}
+
 .title {
   display: flex;
   gap: 0.5rem;

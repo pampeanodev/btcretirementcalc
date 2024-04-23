@@ -57,3 +57,10 @@
   font-style: italic;
 }
 
+[data-theme='dark'] {
+  .calculator__result {
+    background-color: #2c2c2d;
+    color: #dadada;
+    border: 1px solid rgb(54, 53, 53);
+  }
+}
