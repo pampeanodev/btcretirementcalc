@@ -23,3 +23,16 @@
     color: #a94442;
   }
 }
+[data-theme='dark'] {
+  .infobox.infobox-success {
+    color: #d8fed8;
+  }
+
+  .infobox.infobox-info {
+    color: #cde3ee;
+  }
+
+  .infobox.infobox-danger {
+    color: #e3c2c2;
+  }
+}

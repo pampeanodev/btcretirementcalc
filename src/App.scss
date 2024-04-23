@@ -4,6 +4,11 @@
   text-align: center;
 }
 
+body.dark {
+  background-color: #1f2023;
+  color: #dadada;
+}
+
 .title {
   display: flex;
   gap: 0.5rem;
@@ -20,6 +25,11 @@
   font-size: medium;
   font-weight: 500;
   gap: 0.3rem;
+}
+[data-theme='dark'] {
+  .signature>a {
+    color: lightskyblue;
+  }
 }
 .donate-input{
   max-width: 10rem;
