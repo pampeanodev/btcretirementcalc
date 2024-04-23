@@ -38,7 +38,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
     parseFloat(searchParams.get("inflationRate") ?? "2.0"),
   );
   const [optimized, setOptimized] = useState<boolean>(
-    searchParams.get("optimized") === "true" ?? "false",
+    searchParams.get("optimized") == "true" ? true : false,
   );
   const [t] = useTranslation();
   const btcBuyMin: number = 0;
@@ -273,7 +273,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
         </div>
         <div className="input-panel__sliders switch">
           <span>{t("input.conservative")}</span>
-          <Switch onChange={handleOptimizedSwitchChange} />
+          <Switch checked={optimized} onChange={handleOptimizedSwitchChange} />
           <span> {t("input.optimized")}</span>
           <Popover
             zIndex={2000}
