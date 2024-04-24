@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { InputData } from "../../models/InputData";
 import { Slider, InputNumber, Switch, Popover } from "antd";
 import "./InputPanel.scss";
@@ -6,46 +6,118 @@ import { useTranslation } from "react-i18next";
 import { QuestionCircleTwoTone } from "@ant-design/icons";
 import ExplanatoryOverlay from "./ExplanatoryOverlay";
 import { BITCOIN_COLOR, BITCOIN_SIGN } from "../../constants";
+import { useSearchParams } from "react-router-dom";
+
 interface InputPanelProps {
   onCalculate: (data: InputData) => void;
   clearChart: () => void;
 }
 
 const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
-  const [currentAge, setCurrentAge] = useState<number>(30);
-  const [currentSavings, setCurrentSavings] = useState<number>(0.1);
-  const [annualDeposit, setAnnualDeposit] = useState<number>(0);
-  const [bitcoinPriceAnnualGrowth, setBitcoinPriceAnnualGrowth] = useState<number>(12);
-  const [lifeExpectancy, setLifeExpectancy] = useState<number>(86);
-  const [desiredRetirementIncome, setDesiredRetirementIncome] = useState<number>(120000);
-  const [inflationRate, setInflationRate] = useState<number>(2.0);
-  const [optimized, setOptimized] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [currentAge, setCurrentAge] = useState<number>(
+    parseInt(searchParams.get("currentAge") || "30"),
+  );
+  const [currentSavings, setCurrentSavings] = useState<number>(
+    parseFloat(searchParams.get("currentSavings") ?? "0.1"),
+  );
+  const [annualBuy, setAnnualBuy] = useState<number>(
+    parseInt(searchParams.get("annualBuy") ?? "0"),
+  );
+  const [bitcoinCagr, setBitcoinPriceAnnualGrowth] = useState<number>(
+    parseInt(searchParams.get("bitcoinCagr") ?? "12"),
+  );
+  const [lifeExpectancy, setLifeExpectancy] = useState<number>(
+    parseInt(searchParams.get("lifeExpectancy") ?? "86"),
+  );
+  const [desiredRetirementIncome, setDesiredRetirementIncome] = useState<number>(
+    parseInt(searchParams.get("desiredRetirementIncome") ?? "120000"),
+  );
+  const [inflationRate, setInflationRate] = useState<number>(
+    parseFloat(searchParams.get("inflationRate") ?? "2.0"),
+  );
+  const [optimized, setOptimized] = useState<boolean>(
+    searchParams.get("optimized") == "true" ? true : false,
+  );
   const [t] = useTranslation();
   const btcBuyMin: number = 0;
   const btcBuyMax: number = 200000;
   const btcBuyStep: number = 100;
 
   useEffect(() => {
+    initQueryString();
     calculate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentAge,
     currentSavings,
-    annualDeposit,
-    bitcoinPriceAnnualGrowth,
+    annualBuy,
+    bitcoinCagr,
     lifeExpectancy,
     desiredRetirementIncome,
     inflationRate,
     optimized,
   ]);
 
-  const handleChange = (newValue: number, set: Dispatch<SetStateAction<number>>) => {
-    if (isNaN(newValue)) {
+  const initQueryString = () => {
+    setSearchParams({
+      currentAge: currentAge.toString(),
+      lifeExpectancy: lifeExpectancy.toString(),
+      currentSavings: currentSavings.toString(),
+      annualBuy: annualBuy.toString(),
+      bitcoinCagr: bitcoinCagr.toString(),
+      desiredRetirementIncome: desiredRetirementIncome.toString(),
+      inflationRate: inflationRate.toString(),
+      optimized: optimized.toString(),
+    });
+  };
+
+  const handleCurrentSavingsChange = (newValue: number | null | undefined) => {
+    if (!newValue) {
       return;
     }
     clearChart();
-    set(newValue);
+    setCurrentSavings(newValue);
+    setSearchParams({ currentSavings: currentSavings.toString() });
   };
+
+  const handleAnnualBuyChange = (newValue: number | null | undefined) => {
+    if (!newValue) {
+      return;
+    }
+    clearChart();
+    setAnnualBuy(newValue);
+    setSearchParams({ annualBuy: annualBuy.toString() });
+  };
+
+  const handleBitcoinPriceGrowthChange = (newValue: number | null | undefined) => {
+    if (!newValue) {
+      return;
+    }
+    clearChart();
+    setBitcoinPriceAnnualGrowth(newValue);
+    setSearchParams({ bitcoinCagr: bitcoinCagr.toString() });
+  };
+
+  const handleInflationRateChange = (newValue: number | null | undefined) => {
+    if (!newValue) {
+      return;
+    }
+    clearChart();
+    setInflationRate(newValue);
+    setSearchParams({ inflationRate: inflationRate.toString() });
+  };
+
+  const handleDesiredRetirementIncomeChange = (newValue: number | null | undefined) => {
+    if (!newValue) {
+      return;
+    }
+    clearChart();
+    setDesiredRetirementIncome(newValue);
+    setSearchParams({ desiredRetirementIncome: desiredRetirementIncome.toString() });
+  };
+
   const handleCurrentAgeChange = (newValue: number | null | undefined) => {
     if (!newValue) {
       return;
@@ -53,6 +125,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
     clearChart();
     if (newValue <= lifeExpectancy) {
       setCurrentAge(newValue);
+      setSearchParams({ currentAge: newValue.toString() });
     }
   };
   const handleLifeExpectancyChange = (newValue: number | null | undefined) => {
@@ -62,17 +135,19 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
     clearChart();
     if (newValue > currentAge) {
       setLifeExpectancy(newValue);
+      setSearchParams({ lifeExpectancy: newValue.toString() });
     }
   };
   const handleOptimizedSwitchChange = (checked: boolean) => {
     setOptimized(checked);
+    setSearchParams({ optimized: checked.toString() });
   };
   const calculate = () => {
     onCalculate({
       currentAge,
       currentSavingsInBitcoin: currentSavings,
-      annualBuyInFiat: annualDeposit,
-      annualPriceGrowth: bitcoinPriceAnnualGrowth,
+      annualBuyInFiat: annualBuy,
+      annualPriceGrowth: bitcoinCagr,
       lifeExpectancy: lifeExpectancy,
       desiredRetirementAnnualBudget: desiredRetirementIncome,
       optimized: optimized,
@@ -112,7 +187,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             addonAfter={BITCOIN_SIGN}
             name="currentSavings"
             value={currentSavings}
-            onChange={(n) => handleChange(n!, setCurrentSavings)}
+            onChange={handleCurrentSavingsChange}
           />
         </div>
         <div className="input-panel__inputs control">
@@ -122,9 +197,9 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             className="input"
             step={btcBuyStep}
             max={btcBuyMax}
-            value={annualDeposit}
+            value={annualBuy}
             addonAfter="$"
-            onChange={(n) => handleChange(n!, setAnnualDeposit)}
+            onChange={handleAnnualBuyChange}
           />
         </div>
         <div className="input-panel__inputs control">
@@ -136,8 +211,8 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             addonAfter={"%"}
             min={0}
             max={100}
-            value={bitcoinPriceAnnualGrowth}
-            onChange={(n) => handleChange(n!, setBitcoinPriceAnnualGrowth)}
+            value={bitcoinCagr}
+            onChange={handleBitcoinPriceGrowthChange}
           />
         </div>
         <div className="input-panel__inputs control">
@@ -150,9 +225,9 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             addonAfter={"%"}
             step={0.1}
             min={0}
-            max={bitcoinPriceAnnualGrowth}
+            max={bitcoinCagr}
             value={inflationRate}
-            onChange={(n) => handleChange(n!, setInflationRate)}
+            onChange={handleInflationRateChange}
           />
         </div>
         <div className="input-panel__inputs control">
@@ -163,7 +238,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             addonAfter="$"
             name="desiredRetirementIncome"
             value={desiredRetirementIncome}
-            onChange={(n) => handleChange(n!, setDesiredRetirementIncome)}
+            onChange={handleDesiredRetirementIncomeChange}
           />
         </div>
       </div>
@@ -178,8 +253,8 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             step={btcBuyStep}
             tooltip={{ color: BITCOIN_COLOR, open: true, placement: "top" }}
             max={btcBuyMax}
-            onChange={(n) => handleChange(n, setAnnualDeposit)}
-            value={typeof annualDeposit === "number" ? annualDeposit : 0}
+            onChange={handleAnnualBuyChange}
+            value={typeof annualBuy === "number" ? annualBuy : 0}
           />
         </div>
         <div className="slider">
@@ -192,13 +267,13 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             tooltip={{ color: BITCOIN_COLOR, open: true, placement: "top" }}
             min={0}
             max={100}
-            onChange={(n) => handleChange(n, setBitcoinPriceAnnualGrowth)}
-            value={typeof bitcoinPriceAnnualGrowth === "number" ? bitcoinPriceAnnualGrowth : 0}
+            onChange={handleBitcoinPriceGrowthChange}
+            value={typeof bitcoinCagr === "number" ? bitcoinCagr : 0}
           />
         </div>
         <div className="input-panel__sliders switch">
           <span>{t("input.conservative")}</span>
-          <Switch onChange={handleOptimizedSwitchChange} />
+          <Switch checked={optimized} onChange={handleOptimizedSwitchChange} />
           <span> {t("input.optimized")}</span>
           <Popover
             zIndex={2000}
