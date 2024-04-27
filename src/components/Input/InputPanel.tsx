@@ -164,6 +164,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             className="input"
             type="number"
             name="currentAge"
+            min={0}
             max={150}
             value={currentAge}
             onChange={handleCurrentAgeChange}
@@ -174,6 +175,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           <InputNumber
             className="input"
             type="number"
+            min={0}
             name="lifeExpectancy"
             value={lifeExpectancy}
             onChange={handleLifeExpectancyChange}
