@@ -74,52 +74,52 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
   };
 
   const handleCurrentSavingsChange = (newValue: number | null | undefined) => {
-    if (!newValue) {
+    if (newValue === undefined || newValue == null) {
       return;
     }
     clearChart();
     setCurrentSavings(newValue);
-    setSearchParams({ currentSavings: currentSavings.toString() });
+    setSearchParams({ currentSavings: newValue.toString() });
   };
 
   const handleAnnualBuyChange = (newValue: number | null | undefined) => {
-    if (!newValue) {
+    if (newValue === undefined || newValue == null) {
       return;
     }
     clearChart();
     setAnnualBuy(newValue);
-    setSearchParams({ annualBuy: annualBuy.toString() });
+    setSearchParams({ annualBuy: newValue.toString() });
   };
 
   const handleBitcoinPriceGrowthChange = (newValue: number | null | undefined) => {
-    if (!newValue) {
+    if (newValue === undefined || newValue == null) {
       return;
     }
     clearChart();
     setBitcoinPriceAnnualGrowth(newValue);
-    setSearchParams({ bitcoinCagr: bitcoinCagr.toString() });
+    setSearchParams({ bitcoinCagr: newValue.toString() });
   };
 
   const handleInflationRateChange = (newValue: number | null | undefined) => {
-    if (!newValue) {
+    if (newValue === undefined || newValue == null) {
       return;
     }
     clearChart();
     setInflationRate(newValue);
-    setSearchParams({ inflationRate: inflationRate.toString() });
+    setSearchParams({ inflationRate: newValue.toString() });
   };
 
   const handleDesiredRetirementIncomeChange = (newValue: number | null | undefined) => {
-    if (!newValue) {
+    if (newValue === undefined || newValue == null) {
       return;
     }
     clearChart();
     setDesiredRetirementIncome(newValue);
-    setSearchParams({ desiredRetirementIncome: desiredRetirementIncome.toString() });
+    setSearchParams({ desiredRetirementIncome: newValue.toString() });
   };
 
   const handleCurrentAgeChange = (newValue: number | null | undefined) => {
-    if (!newValue) {
+    if (newValue === undefined || newValue == null) {
       return;
     }
     clearChart();
@@ -129,7 +129,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
     }
   };
   const handleLifeExpectancyChange = (newValue: number | null | undefined) => {
-    if (!newValue) {
+    if (newValue === undefined || newValue == null) {
       return;
     }
     clearChart();
@@ -183,6 +183,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
           <label htmlFor="currentSavings">{t("input.savings-btc")}</label>
           <InputNumber
             className="input"
+            min={0}
             step={0.01}
             addonAfter={BITCOIN_SIGN}
             name="currentSavings"
@@ -196,6 +197,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             name="annualBuy"
             className="input"
             step={btcBuyStep}
+            min={btcBuyMin}
             max={btcBuyMax}
             value={annualBuy}
             addonAfter="$"
@@ -236,6 +238,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
             className="input"
             type="number"
             addonAfter="$"
+            min={0}
             name="desiredRetirementIncome"
             value={desiredRetirementIncome}
             onChange={handleDesiredRetirementIncomeChange}
