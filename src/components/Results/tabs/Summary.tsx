@@ -1,6 +1,7 @@
 import InfoBox from "../InfoBox";
 import { toBtc, toUsd } from "../../../constants";
 import { useTranslation } from "react-i18next";
+import AnnualBudgetExplanation from "./AnnualBudgetExplanation";
 
 type Props = {
   bitcoinPrice: number;
@@ -32,11 +33,15 @@ const Summary = ({
       </div>
       <div className="column">
         <InfoBox label={t("summary.bitcoin-price")} value={toUsd(bitcoinPrice)} type="info" />
-        <InfoBox
-          label={t("summary.annual-retirement-budget")}
-          value={toUsd(annualBudget)}
-          type={onTrack ? "success" : "danger"}
-        />
+        <div className="inline">
+          <InfoBox
+            label={t("summary.annual-retirement-budget")}
+            value={toUsd(annualBudget)}
+            type={onTrack ? "success" : "danger"}
+          />
+          <AnnualBudgetExplanation />
+        </div>
+
         <InfoBox
           label={t("summary.monthly-retirement-budget")}
           value={toUsd(annualBudget / 12)}

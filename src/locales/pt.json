@@ -1,4 +1,6 @@
 {
+  "annual-budget-explanation.title": "Obtendo um orçamento maior do que o esperado?",
+  "annual-budget.explanation.text": "É possível que você obtenha um leve excesso na renda anual esperada. Isto pode ser causado por vários fatores. A previsão leva em consideração o crescimento anual do peço do Bitcoin, a inflação e outras variáveis que podem causar um orçamento maior do que o esperado, considerando que a atualização é feita anualmente e é indexada pela inflação definida.",
   "app.title": "Calculadora de Aposentadoria com Bitcoin",
   "calculator.chart-view": "Gráfico",
   "calculator.table-view": "Tabela",

@@ -1,4 +1,6 @@
 {
+  "annual-budget-explanation.title": "Obtienes un ingreso anual mayor al esperado?",
+  "annual-budget.explanation.text": "Es posible que obtengas un exceso en el ingreso anual, dependiendo de múltiples factores. La predicción tiene en cuenta la actualización del precio de Bitcoin, inflación, y otras variables que podrían causar un presupuesto más alto que el esperado, considerando que la actualización se realiza de forma anual y se indexa usando la inflación definida.",
   "app.title": "Calculadora de retiro Bitcoin",
   "calculator.chart-view": "Vista Gráfica",
   "calculator.table-view": "Vista de Tabla",

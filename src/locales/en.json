@@ -1,4 +1,6 @@
 {
+  "annual-budget-explanation.title": "Getting higher budget than expected?",
+  "annual-budget.explanation.text": "You may get some excess of yearly budget depending on several factors. The prediction takes into account Bitcoin CAGR, inflation, and other things that could lead to a greater than expected budget, considering the updates are made on a yearly basis and it's indexed by inflation rate.",
   "app.title": "Bitcoin Retirement Calculator",
   "calculator.chart-view": "Chart view",
   "calculator.table-view": "Table view",
