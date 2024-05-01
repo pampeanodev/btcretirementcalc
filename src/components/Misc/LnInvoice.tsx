@@ -1,21 +1,18 @@
 import { InputNumber, QRCode } from "antd";
 import { useState } from "react";
-import { LightningAddress } from "@getalby/lightning-tools";
+import albyApiClient from "../../services/albyApiClient";
 
 const LnInvoice = () => {
   const [lnRequest, setLnRequest] = useState("");
-  const ln = new LightningAddress("pampeanodev@getalby.com");
 
   const onChange = async (amount: number | null) => {
     if (!amount) {
       return;
     }
-    await ln.fetch();
-    // request an invoice for 1000 satoshis
-    // this returns a new `Invoice` class that can also be used to validate the payment
-    const invoice = await ln.requestInvoice({ satoshi: amount });
+    const createInvoiceResponse = await albyApiClient.createInvoice(amount);
+    const paymentRequest: string = createInvoiceResponse.data.payment_request as string;
 
-    setLnRequest(invoice.paymentRequest);
+    setLnRequest(paymentRequest);
   };
   return (
     <div>
