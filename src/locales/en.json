@@ -6,6 +6,8 @@
   "cannot-retire.text2": "Stay humble, and keep stacking  sats.",
   "chart.title": "Your retirement prediction",
   "donate.donate": "Donate!",
+  "donate.lightning": "Lightning",
+  "donate.onchain": "Bitcoin",
   "donate.qrcode.title": "Donate with Lightning:",
   "input.annual-buy": "Annual estimated buy:",
   "input.conservative": "Conservative",
