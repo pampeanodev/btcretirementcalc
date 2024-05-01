@@ -25,6 +25,7 @@ const Donate = () => {
       zIndex={2000}
       content={<Tabs className="donate-tabs" defaultActiveKey="1" items={tabs} />}
       title={t("donate.qrcode.title")}
+      placement="topLeft"
       trigger="click"
     >
       <Button size="small" type="primary">
