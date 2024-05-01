@@ -9,7 +9,7 @@ const InfoBox = ({ type, label, value }: InfoBoxProps) => {
   return (
     <div className={`infobox infobox-${type}`}>
       <span>{label}</span>
-      <span style={{ fontWeight: "800" }}>{value}</span>
+      <span>{value}</span>
     </div>
   );
 };

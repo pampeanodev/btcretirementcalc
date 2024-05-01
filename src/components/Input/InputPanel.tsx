@@ -20,13 +20,13 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
     parseInt(searchParams.get("currentAge") || "30"),
   );
   const [currentSavings, setCurrentSavings] = useState<number>(
-    parseFloat(searchParams.get("currentSavings") ?? "0.1"),
+    parseFloat(searchParams.get("currentSavings") ?? "0.5"),
   );
   const [annualBuy, setAnnualBuy] = useState<number>(
     parseInt(searchParams.get("annualBuy") ?? "0"),
   );
   const [bitcoinCagr, setBitcoinPriceAnnualGrowth] = useState<number>(
-    parseInt(searchParams.get("bitcoinCagr") ?? "12"),
+    parseInt(searchParams.get("bitcoinCagr") ?? "20"),
   );
   const [lifeExpectancy, setLifeExpectancy] = useState<number>(
     parseInt(searchParams.get("lifeExpectancy") ?? "86"),

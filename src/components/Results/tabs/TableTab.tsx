@@ -34,7 +34,7 @@ const TableTab = ({ dataSet }: CalculationResult) => {
       title: t("table.bitcoin-price"),
       dataIndex: "bitcoinPrice",
       key: "bitcoinPrice",
-      width: "9rem",
+      width: "10rem",
       render: (n: number) => <span>{toUsd(n)}</span>,
     },
     {
