@@ -38,7 +38,7 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
     parseFloat(searchParams.get("inflationRate") ?? "2.0"),
   );
   const [optimized, setOptimized] = useState<boolean>(
-    searchParams.get("optimized") == "true" ? true : false,
+    searchParams.get("optimized") == "false" ? false : true,
   );
   const [t] = useTranslation();
   const btcBuyMin: number = 0;
