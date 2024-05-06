@@ -1,7 +1,7 @@
 import type { CollapseProps } from "antd";
 import { Collapse } from "antd";
 import { useTranslation } from "react-i18next";
-
+import "./Faq.scss";
 const Faq = () => {
   const [t] = useTranslation();
 
@@ -97,6 +97,6 @@ const Faq = () => {
       children: <p>{t("faq.get-money-text")}</p>,
     },
   ];
-  return <Collapse items={items} defaultActiveKey={["1"]} />;
+  return <Collapse className="faq" items={items} defaultActiveKey={["1"]} />;
 };
 export default Faq;
