@@ -6,6 +6,8 @@ import i18next, { resources } from "./locales/i18n.tsx";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Faq from "./components/Misc/Faq.tsx";
+import Layout from "./Layout.tsx";
 
 i18next
   .use(initReactI18next)
@@ -20,8 +22,17 @@ i18next
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <App />,
+    element: <Layout />,
+    children: [
+      {
+        path: "/",
+        element: <App />,
+      },
+      {
+        path: "faq",
+        element: <Faq />,
+      },
+    ],
   },
 ]);
 
