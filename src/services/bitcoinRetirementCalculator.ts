@@ -45,7 +45,7 @@ const buildRetirementPrediction = (
 
   let accumulatedSavingsBitcoin = input.currentSavingsInBitcoin;
   let indexedAnnualBuyInFiat = input.annualBuyInFiat;
-  let accumulatedSavingsFiat = input.currentSavingsInBitcoin * startingBitcoinPrice;
+  let accumulatedSavingsFiat: number;
 
   // iterate to find retirement values (age, savings, etc)
   for (const dataSetItem of bitcoinPriceHistory) {

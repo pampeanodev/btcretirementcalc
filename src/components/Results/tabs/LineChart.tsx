@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { LineChartProps } from "../../../models/LineChartProps";
 
 const LineChart = (chartData: LineChartProps) => {
-  const chartRef = useRef<Chart<"line">>();
+  const chartRef = useRef<Chart<"line"> | null>(null);
   const [t] = useTranslation();
 
   return (

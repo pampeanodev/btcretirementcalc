@@ -45,21 +45,6 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
   const btcBuyMax: number = 200000;
   const btcBuyStep: number = 100;
 
-  useEffect(() => {
-    initQueryString();
-    calculate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    currentAge,
-    currentSavings,
-    annualBuy,
-    bitcoinCagr,
-    lifeExpectancy,
-    desiredRetirementIncome,
-    inflationRate,
-    optimized,
-  ]);
-
   const initQueryString = () => {
     setSearchParams({
       currentAge: currentAge.toString(),
@@ -154,6 +139,21 @@ const InputPanel = ({ onCalculate, clearChart }: InputPanelProps) => {
       inflationRate: inflationRate,
     });
   };
+
+  useEffect(() => {
+    initQueryString();
+    calculate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    currentAge,
+    currentSavings,
+    annualBuy,
+    bitcoinCagr,
+    lifeExpectancy,
+    desiredRetirementIncome,
+    inflationRate,
+    optimized,
+  ]);
 
   return (
     <div className="input-panel">
