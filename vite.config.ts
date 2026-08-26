@@ -1,7 +1,18 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-})
+  legacy: {
+    // Vite 8 aligned CJS interop to Node semantics, where `import x from <cjs>`
+    // resolves to `module.exports` and `__esModule` is ignored. Because this
+    // package is `"type": "module"`, that breaks `use-local-storage` — a CJS-only
+    // package that sets `exports.default = fn`, so the default import lands on
+    // `{ __esModule: true, default: fn }` instead of the function itself.
+    // See https://vite.dev/guide/migration - "Consistent CommonJS Interop".
+    // TODO: drop this once `use-local-storage` is replaced; it is the only CJS
+    // dependency in the bundle that hits this path.
+    inconsistentCjsInterop: true,
+  },
+});
