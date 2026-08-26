@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 
 // https://vitejs.dev/config/
@@ -13,6 +13,12 @@ export default defineConfig({
     // See https://vite.dev/guide/migration - "Consistent CommonJS Interop".
     // TODO: drop this once `use-local-storage` is replaced; it is the only CJS
     // dependency in the bundle that hits this path.
+    // test/App.spec.tsx guards this: it fails if the flag is removed.
     inconsistentCjsInterop: true,
+  },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./test/setup.ts"],
+    restoreMocks: true,
   },
 });
