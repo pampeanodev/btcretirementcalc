@@ -44,6 +44,7 @@ const Calculator = () => {
         borderColor: "darkGreen",
         backgroundColor: "green",
         data: fiatDataSet,
+        yAxisID: "usd",
       });
     }
     if (btcDataSet.length) {
@@ -53,6 +54,7 @@ const Calculator = () => {
         borderColor: BITCOIN_COLOR,
         backgroundColor: "orange",
         data: btcDataSet,
+        yAxisID: "btc",
       });
     }
 
@@ -82,9 +84,11 @@ const Calculator = () => {
     data: InputData,
   ) {
     const btcDataSet = calculationResult.dataSet.map((item) => item.savingsBitcoin);
-    const fiatDataSet = data.optimized
-      ? []
-      : calculationResult.dataSet.map((item) => item.savingsFiat);
+    // The fiat series used to be dropped in optimized mode, because savingsFiat
+    // held the yearly withdrawal there instead of the remaining stack and drew a
+    // line that rose while savings fell. It means remaining savings in both
+    // strategies now, so both can be plotted.
+    const fiatDataSet = calculationResult.dataSet.map((item) => item.savingsFiat);
 
     setChartProps(fiatDataSet, btcDataSet, getChartLabels(data.currentAge, data.lifeExpectancy));
   }

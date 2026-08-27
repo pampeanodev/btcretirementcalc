@@ -10,7 +10,10 @@ test("should process input correctly", () => {
     savingsBitcoin: 1.259344,
     savingsFiat: 1050635.89,
     bitcoinPriceAtRetirementAge: 834272.358,
-    annualRetirementBudget: 0.05,
+    // Was 0.05 — a flat BTC average. This strategy now reports the budget in
+    // fiat like the conservative one does; with no inflation it is the desired
+    // budget unchanged.
+    annualRetirementBudget: 100000.0,
     dataSet: [],
     optimized: true,
     canRetire: true,
@@ -48,8 +51,12 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     savingsBitcoin: 1.33177087,
     savingsFiat: 2165140.88,
     bitcoinPriceAtRetirementAge: 1625760.809,
-    annualRetirementBudget: 0.07,
-    annualRetirementBudgetAtRetirementAge: 100000.0,
+    // Was 0.07 BTC. Reported in fiat now: 100000 * 1.02^33, the desired budget
+    // indexed from age 30 to retirement at 63.
+    annualRetirementBudget: 192223.14,
+    // Was 100000.0, which never matched what the code produced — the field has
+    // always held the *indexed* budget, and nothing asserted it.
+    annualRetirementBudgetAtRetirementAge: 192223.14,
     optimized: true,
     canRetire: true,
   };
@@ -73,5 +80,8 @@ test("Calculation with 2 percent inflation should give expected results", () => 
   );
   expect(output.annualRetirementBudget.toFixed(2)).toBe(
     expectedCalculation.annualRetirementBudget.toFixed(2),
+  );
+  expect(output.annualRetirementBudgetAtRetirementAge?.toFixed(2)).toBe(
+    expectedCalculation.annualRetirementBudgetAtRetirementAge?.toFixed(2),
   );
 });
