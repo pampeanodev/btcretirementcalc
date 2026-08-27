@@ -38,7 +38,10 @@ const buildRetirementPrediction = (
   const calculationResult: CalculationResult = {
     startingBitcoinPrice: startingBitcoinPrice,
     dataSet: [],
-    retirementAge: input.lifeExpectancy,
+    // 0 means "no retirement age found", matching the conservative calculator.
+    // Seeding this with lifeExpectancy made an unreachable retirement read back
+    // as a real one for anyone not checking canRetire first.
+    retirementAge: 0,
     savingsBitcoin: 0,
     savingsFiat: 0,
     bitcoinPriceAtRetirementAge: 0,
@@ -62,9 +65,11 @@ const buildRetirementPrediction = (
       calculationResult.canRetire = true;
       calculationResult.retirementAge = dataSetItem.age;
 
-      const yearsAfterRetirement = input.lifeExpectancy - dataSetItem.age;
-
-      calculationResult.annualRetirementBudget = accumulatedSavingsBitcoin / yearsAfterRetirement;
+      // Reported in fiat, like the conservative strategy. This used to be
+      // accumulatedSavingsBitcoin / years: a flat BTC average that matched
+      // neither the currency the user budgets in nor the shrinking amounts this
+      // strategy actually sells as the price climbs.
+      calculationResult.annualRetirementBudget = dataSetItem.desiredAnnualBudgetIndexed;
       calculationResult.annualRetirementBudgetAtRetirementAge =
         dataSetItem.desiredAnnualBudgetIndexed;
       calculationResult.bitcoinPriceAtRetirementAge = dataSetItem.bitcoinPriceIndexed;
@@ -109,7 +114,10 @@ const buildRetirementPrediction = (
       year: dataSetItem.year,
       age: dataSetItem.age,
       savingsBitcoin: remainingSavingsBitcoin,
-      savingsFiat: bitcoinToSell * dataSetItem.bitcoinPriceIndexed,
+      // What is left in the stack, valued at this year's price. This used to be
+      // the amount sold that year, which made the "accumulated savings" column
+      // climb with inflation while the stack was actually draining.
+      savingsFiat: remainingSavingsBitcoin * dataSetItem.bitcoinPriceIndexed,
       bitcoinFlow: -bitcoinToSell,
       bitcoinPrice: dataSetItem.bitcoinPriceIndexed,
       annualRetirementBudget: dataSetItem.desiredAnnualBudgetIndexed,

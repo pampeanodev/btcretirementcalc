@@ -10,7 +10,9 @@ test("Calculate should give expected results", () => {
     savingsBitcoin: 1.27341235,
     savingsFiat: 2277290.29,
     bitcoinPriceAtRetirementAge: 1788336.89,
-    annualRetirementBudget: 119857.38,
+    // Was 119857.38 = savingsFiat / 19. Retiring at 64 with a life expectancy
+    // of 83 funds ages 64..83, which is 20 years, not 19.
+    annualRetirementBudget: 113864.51,
     dataSet: [],
   };
   const testInput: InputData = {
@@ -44,7 +46,9 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     savingsBitcoin: 1.34361637,
     savingsFiat: 3869795.8,
     bitcoinPriceAtRetirementAge: 2880134.445,
-    annualRetirementBudget: 276413.99,
+    // Was 276413.99 = savingsFiat / 14. Retiring at 69 with a life expectancy
+    // of 83 funds ages 69..83, which is 15 years, not 14.
+    annualRetirementBudget: 257986.39,
     annualRetirementBudgetAtRetirementAge: 216474.48,
     optimized: false,
     canRetire: true,

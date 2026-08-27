@@ -45,23 +45,28 @@ const buildRetirementPrediction = (
 
   let accumulatedSavingsBitcoin = input.currentSavingsInBitcoin;
   let indexedAnnualBuyInFiat = input.annualBuyInFiat;
-  let accumulatedSavingsFiat: number;
 
   // iterate to find retirement values (age, savings, etc)
   for (const dataSetItem of bitcoinPriceHistory) {
     const pendingSavingsFiat = calculateFiatWillNeedOverLife(dataSetItem.age, bitcoinPriceHistory);
-    accumulatedSavingsFiat = accumulatedSavingsBitcoin * dataSetItem.bitcoinPriceIndexed;
+    // Value of the stack as it stands at the start of the year, before this
+    // year's purchase. Retiring means not buying, so this is what the decision
+    // is made against.
+    const savingsFiatBeforeBuying = accumulatedSavingsBitcoin * dataSetItem.bitcoinPriceIndexed;
 
-    if (pendingSavingsFiat <= accumulatedSavingsFiat) {
+    if (pendingSavingsFiat <= savingsFiatBeforeBuying) {
       calculationResult.canRetire = true;
-      const yearsAfterRetirement = input.lifeExpectancy - dataSetItem.age;
-      calculationResult.annualRetirementBudget = accumulatedSavingsFiat / yearsAfterRetirement;
+      // Retirement spends from this age through life expectancy inclusive, so
+      // the final year counts too — dividing by the difference alone overstated
+      // the budget by one year's worth.
+      const fundedYears = input.lifeExpectancy - dataSetItem.age + 1;
+      calculationResult.annualRetirementBudget = savingsFiatBeforeBuying / fundedYears;
       calculationResult.annualRetirementBudgetAtRetirementAge =
         dataSetItem.desiredAnnualBudgetIndexed;
       calculationResult.retirementAge = dataSetItem.age;
       calculationResult.bitcoinPriceAtRetirementAge = dataSetItem.bitcoinPriceIndexed;
       calculationResult.savingsBitcoin = accumulatedSavingsBitcoin;
-      calculationResult.savingsFiat = accumulatedSavingsFiat;
+      calculationResult.savingsFiat = savingsFiatBeforeBuying;
       break;
     }
     // increase bitcoin price as composite interest based on annual price growth
@@ -70,13 +75,14 @@ const buildRetirementPrediction = (
     const bitcoinToBuy = indexedAnnualBuyInFiat / dataSetItem.bitcoinPriceIndexed;
     accumulatedSavingsBitcoin += bitcoinToBuy;
 
-    // add current year to dataset
+    // add current year to dataset — priced after the purchase, so savingsFiat
+    // and savingsBitcoin in this row describe the same moment
     calculationResult.dataSet.push({
       key: dataSetItem.year,
       year: dataSetItem.year,
       age: dataSetItem.age,
       savingsBitcoin: accumulatedSavingsBitcoin,
-      savingsFiat: accumulatedSavingsFiat,
+      savingsFiat: accumulatedSavingsBitcoin * dataSetItem.bitcoinPriceIndexed,
       bitcoinFlow: bitcoinToBuy,
       bitcoinPrice: dataSetItem.bitcoinPriceIndexed,
       annualRetirementBudget: dataSetItem.desiredAnnualBudgetIndexed,
