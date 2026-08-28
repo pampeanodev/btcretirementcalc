@@ -25,3 +25,6 @@ dist-ssr
 
 # env vars
 .env
+
+# visual brainstorming companion
+.superpowers/
