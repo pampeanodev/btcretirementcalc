@@ -145,20 +145,73 @@ New components:
 `Summary` and `OptimizedSummary` are deleted; they differ only in `toUsd` vs
 `toBtc` and both are superseded by `StrategyCard`.
 
-### Design tokens
+### Styling: Tailwind v4 alongside antd
 
-One `src/styles/_tokens.scss` defines colour, space, radius, type scale and
-font stacks as CSS custom properties on `:root`, redefined once under
-`[data-theme='dark']`. Every component reads variables; no component declares a
-literal colour.
+Tailwind v4 via `@tailwindcss/vite`, verified against this toolchain: the plugin
+declares `vite: ^5.2.0 || ^6 || ^7 || ^8` and we are on Vite 8.
 
-The same values feed antd through `ConfigProvider`'s `theme.token`, so the two
-systems stop disagreeing. `html * { font-family: monospace !important }` is
-deleted; mono is applied deliberately via a `.tabular` class and the token
-`--font-mono`.
+Tailwind v4 is CSS-first — its `@theme` block *is* a set of CSS custom
+properties, and utilities are generated from them. That collapses two things the
+original draft kept apart: the token system and the utility system become one
+file.
+
+```
+src/styles/theme.css
+  @theme {
+    --color-accent: #F6931A;
+    --color-surface: …;
+    --font-mono: …;
+    --spacing-*, --radius-*, --text-*
+  }
+```
+
+The same custom properties are read back in TypeScript and passed to antd's
+`ConfigProvider` `theme.token`. One source of truth; the two theming systems stop
+disagreeing.
+
+**Preflight is not imported.** Tailwind's base reset fights antd's own base
+styles, so we import `tailwindcss/theme` and `tailwindcss/utilities` and skip
+`tailwindcss/preflight`. The few resets we actually want are declared explicitly.
+
+Division of labour: Tailwind owns layout, spacing, typography and responsive
+behaviour. antd keeps the complex widgets — `Table`, `Slider`, `InputNumber`,
+`Popover`, `QRCode`, `Switch`, `Tabs`, `Spin` — themed through `ConfigProvider`.
+Component SCSS files are deleted as their rules move to utilities; `theme.css`
+and any genuinely component-scoped styles are all that remain.
+
+`html * { font-family: monospace !important }` is deleted. Mono becomes a
+deliberate `font-mono` on figures, prices and table cells.
 
 Bootstrap 3's alert palette (`#3c763d`, `#31708f`, `#a94442`) goes. Bitcoin
 orange `#F6931A` stays as the single accent.
+
+### Responsive
+
+The app has two media queries today, at 800px and 700px, which do not agree with
+each other. There is no breakpoint scale. The comparison layout makes this
+load-bearing rather than cosmetic: two cards side by side must collapse.
+
+Tailwind's default breakpoints are adopted as-is rather than invented. Behaviour
+per region:
+
+| Region | Small | Medium | Large |
+|---|---|---|---|
+| Input bar | one column | two columns | single row above the results |
+| Strategy cards | stacked, selected one first | side by side | side by side |
+| Detail chart | full width, shorter aspect | full width | full width |
+| Table | horizontal scroll inside its own container | scroll | full |
+
+The page body never scrolls horizontally. The table is the only element allowed
+to, and it does so inside its own overflow container.
+
+Touch: `ScrubField`'s track needs a hit area of at least 44px on touch pointers,
+which antd's `Slider` does not give by default — it is enlarged with a
+transparent padded wrapper rather than by growing the visible track.
+
+Dark mode continues to key off `[data-theme]` on the root, which `useLocalStorage`
+already drives, so Tailwind's `dark:` variant is configured to that attribute
+rather than to `prefers-color-scheme`. The OS preference still seeds the initial
+value, exactly as today.
 
 ### Charts
 
@@ -217,6 +270,13 @@ Accessibility, currently absent: both `Switch` components lack an accessible
 name, which is why the existing theme test scopes its query by class. The new
 components carry proper labels and roles, and the tests query by role.
 
+**Responsive is not testable in jsdom.** It has no layout engine, so a passing
+component test says nothing about whether the cards actually sit side by side.
+Verification is a browser pass over the production build at the breakpoints in
+the table above, checking each region's stated behaviour and that the body never
+scrolls horizontally. This is a checklist in the plan, not an automated
+assertion — claiming otherwise would repeat the mistake that shipped #51.
+
 ## Risks
 
 **The comparison layout changes the information architecture.** It is the
@@ -232,3 +292,17 @@ living. The disclosure requirement above exists because of this.
 plus tooltips is most of the build. If the schedule slips, the `cash` variant can
 ship as the dual-axis chart that exists today, and only the `stack` variant is
 new.
+
+**Tailwind and antd have to coexist.** Skipping preflight is the known
+mitigation, but antd 6 renders through CSS-in-JS with generated class names, so
+a utility and a component style can still collide in ways that only show at
+runtime. The first task in the plan is a spike that puts Tailwind in front of the
+existing UI and confirms antd's `Table`, `Slider` and `Popover` still render
+correctly — before any redesign work depends on it. If they cannot be reconciled,
+the fallback is the SCSS-plus-tokens approach this section replaced, and only the
+styling mechanism changes; every design decision above survives.
+
+**A new build plugin, one week after a build plugin took production down.**
+`@tailwindcss/vite` declares Vite 8 support and that was checked rather than
+assumed, but `build-smoke.spec.ts` is what actually proves the bundle boots.
+It runs on every suite, so the guard is already in place.
