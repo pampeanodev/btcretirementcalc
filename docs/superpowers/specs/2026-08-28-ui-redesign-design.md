@@ -270,12 +270,16 @@ Accessibility, currently absent: both `Switch` components lack an accessible
 name, which is why the existing theme test scopes its query by class. The new
 components carry proper labels and roles, and the tests query by role.
 
-**Responsive is not testable in jsdom.** It has no layout engine, so a passing
-component test says nothing about whether the cards actually sit side by side.
-Verification is a browser pass over the production build at the breakpoints in
-the table above, checking each region's stated behaviour and that the body never
-scrolls horizontally. This is a checklist in the plan, not an automated
-assertion — claiming otherwise would repeat the mistake that shipped #51.
+**Responsive is checked by hand, in a browser, as we go.** jsdom has no layout
+engine, so a passing component test says nothing about whether the cards actually
+sit side by side. No automated assertion is written for it — claiming coverage
+there would repeat the mistake that shipped #51.
+
+Instead every phase that touches layout ends with a browser pass at the
+breakpoints in the table above, and what it finds gets fixed inside that phase
+rather than collected for the end. The table is the reference for what each
+region should do; the one hard rule carried across all of them is that the body
+never scrolls horizontally.
 
 ## Risks
 
