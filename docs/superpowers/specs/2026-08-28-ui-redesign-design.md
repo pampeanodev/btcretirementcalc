@@ -138,6 +138,9 @@ New components:
     cut.
 - **`InputGroup`** wraps labelled sets: *About you*, *Your bitcoin*,
   *Assumptions*, *Goal*.
+- **`ScrubField`** is the merged number-input-plus-track control described under
+  *Sliders* below. `InputGroup` composes `ScrubField` and plain number inputs
+  interchangeably.
 
 `Summary` and `OptimizedSummary` are deleted; they differ only in `toUsd` vs
 `toBtc` and both are superseded by `StrategyCard`.
@@ -166,17 +169,29 @@ The dual-axis configuration added while fixing #53 stays available for the
 `cash` variant, which genuinely plots two units. The `stack` variant plots one
 unit at a time, so its scale problem disappears rather than being managed.
 
-## Open decision for review
+## Sliders: merged, not removed
 
-**The two sliders.** `annualBuy` and `growthRate` each have a slider *and* a
-number input. In a compressed input bar there is no room for both.
+`annualBuy` and `growthRate` each have a slider *and* a number input today. They
+are not redundant — they are different affordances. Typing sets a value; dragging
+teaches sensitivity, which is most of why someone opens a retirement calculator.
 
-Recommendation: keep the number inputs, drop the sliders. They duplicate an
-existing control, they are the least precise way to set a figure that matters to
-the dollar, and they consume roughly a third of the current panel's height.
+The comparison layout strengthens the case rather than weakening it: dragging one
+slider moves *both* strategy cards, so the user watches the gap between retiring
+at 57 and at 43 open and close in real time. That is the product's central
+question answered by a gesture.
 
-Flagged rather than decided, because sliders invite exploration in a way typed
-fields do not, and this is a calculator people are meant to play with.
+The actual defect is placement. The inputs live in `.input-panel__inputs` and the
+sliders in `.input-panel__sliders`, a separate block further down, so two
+controls for one value read as two unrelated controls.
+
+They merge into a single `ScrubField`: label and numeric input on one row, track
+directly beneath, in one bordered group. One control, two ways to drive it,
+roughly the height the number input occupies today.
+
+`ScrubField` is used for the parameters where sensitivity is worth feeling —
+`annualBuy`, `growthRate`, `inflationRate` and `desiredRetirementIncome`.
+`currentAge` and `lifeExpectancy` keep plain number inputs; their plausible range
+is narrow and dragging buys nothing.
 
 ## Testing
 
