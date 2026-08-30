@@ -4,9 +4,9 @@
 
 **Goal:** Rebuild the calculator's interface around a side-by-side comparison of the two retirement strategies, in today's dollars, with a chart per strategy that can actually show its own data.
 
-**Architecture:** Tailwind v4 supplies tokens, layout and responsive behaviour; antd keeps the complex widgets and is themed from the same tokens. The two calculators are not touched — present value is a separate transform applied at the presentation boundary, so the 28 existing tests stay a valid regression net for the money maths. New components are built alongside the old ones and switched over late, so the app boots at every commit.
+**Architecture:** Tailwind v4 supplies tokens, layout and responsive behaviour; shadcn/ui supplies the widgets as source in this repository. antd is removed — a spike measured its utilities as silently inert and its share of the bundle at 51.9%, against 2.1% for the application. The two calculators are not touched — present value is a separate transform applied at the presentation boundary, so the 28 existing tests stay a valid regression net for the money maths. New components are built alongside the old ones and switched over late, so the app boots at every commit.
 
-**Tech Stack:** React 19, TypeScript 5.9, Vite 8 (Rolldown), antd 6, Tailwind v4, chart.js + react-chartjs-2, vitest + jsdom + React Testing Library.
+**Tech Stack:** React 19, TypeScript 5.9, Vite 8 (Rolldown), Tailwind v4, shadcn/ui on `@base-ui/react`, chart.js + react-chartjs-2, vitest + jsdom + React Testing Library.
 
 **Spec:** `docs/superpowers/specs/2026-08-28-ui-redesign-design.md`
 
@@ -17,6 +17,9 @@
 - The two calculator services are **not modified** by any task in this plan: `src/services/bitcoinRetirementCalculator.ts`, `src/services/bitcoinRetirementOptimizedCalculator.ts`.
 - Every task ends green on: `npx tsc --noEmit`, `pnpm lint`, `pnpm test:run`. `test/build-smoke.spec.ts` must pass — it executes the real production bundle and is the only guard against bundler-level breakage.
 - No component declares a literal colour. Colours come from tokens.
+- `src/components/ui/` is shadcn's generated output and belongs to shadcn. Application components never go there — they go in `src/components/common/`. Editing a generated file is allowed and expected, but every edit carries a comment saying why, so a future regeneration diff shows what would be lost.
+- Never define a token shadcn already owns: `--color-background`, `--color-foreground`, `--color-primary`, `--color-secondary`, `--color-muted`, `--color-accent`, `--color-destructive`, `--color-border`, `--color-input`, `--color-ring`, `--color-card`, `--color-popover`, `--color-chart-*`, `--color-sidebar-*`, `--radius-*`. Its `@theme inline` block is emitted after ours and wins the name silently. The bitcoin accent is `--color-bitcoin`.
+- No `import ... from "antd"` in any file this plan leaves behind.
 - Every converted (today's-dollars) figure on screen must expose its nominal counterpart. This is asserted, not reviewed.
 - The page body never scrolls horizontally. Only the table may, inside its own container.
 - Prettier config is authoritative: double quotes, semicolons, 2-space indent, print width 100, trailing commas.
@@ -30,314 +33,68 @@
 
 | File | Responsibility |
 |---|---|
-| `src/styles/theme.css` | Tailwind entry, `@theme` tokens, dark variant |
-| `src/styles/tokens.ts` | Same palette in TS, for antd's `ConfigProvider` |
+| `src/styles/theme.css` | Tailwind entry, `@theme` tokens, dark variant — **done, Task 1** |
+| `src/components/ui/*` | shadcn's generated primitives — **done, Task 1**. Not hand-authored |
+| `src/lib/utils.ts` | `cn()` — **done, Task 1** |
 | `src/models/ProjectionView.ts` | `ProjectionPoint`, `ProjectionView` types |
 | `src/services/presentValue.ts` | Discounting and the nominal→view transform |
-| `src/components/ui/StatTile.tsx` | Label, figure, optional nominal footnote |
-| `src/components/ui/ScrubField.tsx` | Number input merged with its slider |
+| `src/components/common/StatTile.tsx` | Label, figure, optional nominal footnote |
+| `src/components/common/ScrubField.tsx` | Number input merged with its slider |
 | `src/components/Input/InputBar.tsx` | Grouped inputs, replaces `InputPanel` |
 | `src/components/Results/ProjectionChart.tsx` | `cash` and `stack` variants |
 | `src/components/Results/StrategyCard.tsx` | One strategy's headline + mini chart |
 | `src/components/Results/StrategyComparison.tsx` | The two cards, selection state |
 | `src/components/Results/StrategyDetail.tsx` | Full chart + table for the selection |
 
-**Modify:** `vite.config.ts`, `src/main.tsx`, `src/App.tsx`, `src/components/Calculator.tsx`, `src/components/Results/tabs/TableTab.tsx`, `test/App.spec.tsx`.
+**Modify:** `vite.config.ts`, `src/main.tsx`, `src/App.tsx`, `src/components/Calculator.tsx`, `src/components/Results/tabs/TableTab.tsx`, `src/components/Misc/Donate.tsx`, `src/components/Misc/OnChain.tsx`, `src/components/Results/tabs/AnnualBudgetExplanation.tsx`, `test/App.spec.tsx`, `test/Donate.spec.tsx`.
 
-**Delete (Task 13, once nothing imports them):** `src/components/Results/tabs/Summary.tsx`, `OptimizedSummary.tsx`, `Result.tsx`, `src/components/Results/InfoBox.tsx`, `src/components/Input/InputPanel.tsx`, and every `.scss` file except none — all seven go.
+**Delete (Task 12, once nothing imports them):** `src/components/Results/tabs/Summary.tsx`, `OptimizedSummary.tsx`, `Result.tsx`, `src/components/Results/InfoBox.tsx`, `src/components/Input/InputPanel.tsx`, and all seven `.scss` files.
 
----
-
-### Task 1: Tailwind v4 alongside antd (spike + gate)
-
-This is the gate the spec calls for. If antd's widgets break under Tailwind and cannot be reconciled here, stop and fall back to SCSS-plus-tokens; every later task's design survives, only the styling mechanism changes.
-
-**Files:**
-- Modify: `vite.config.ts`
-- Create: `src/styles/theme.css`
-- Modify: `src/main.tsx`
-- Modify: `package.json` (dependency)
-
-**Interfaces:**
-- Consumes: nothing
-- Produces: Tailwind utilities available in every component; `src/styles/theme.css` imported once from `main.tsx`
-
-- [ ] **Step 1: Install Tailwind**
-
-```bash
-pnpm add -D tailwindcss@^4.3.3 @tailwindcss/vite@^4.3.3
-```
-
-- [ ] **Step 2: Register the plugin**
-
-In `vite.config.ts`, add the import and put `tailwindcss()` after `react()`. Leave the `legacy` and `test` blocks exactly as they are.
-
-```ts
-import tailwindcss from "@tailwindcss/vite";
-// ...
-  plugins: [react(), tailwindcss()],
-```
-
-- [ ] **Step 3: Create the stylesheet without preflight**
-
-Create `src/styles/theme.css`. Preflight is deliberately not imported — it resets the base styles antd relies on.
-
-```css
-/* Preflight is deliberately omitted: it fights antd's own base styles. */
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
-
-/* Dark mode keys off the [data-theme] attribute that useLocalStorage already
-   drives in App.tsx, not off prefers-color-scheme. */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
-@theme {
-  --color-accent: #f6931a;
-  --color-accent-soft: #f6931a1f;
-
-  --color-surface: #ffffff;
-  --color-surface-sunken: #f5f5f5;
-  --color-border: #e3e3e3;
-  --color-ink: #1f2023;
-  --color-ink-muted: #63666b;
-
-  --color-gain: #2f9e6e;
-  --color-loss: #c0483f;
-
-  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-}
-
-:root[data-theme="dark"] {
-  --color-surface: #2c2c2d;
-  --color-surface-sunken: #1f2023;
-  --color-border: #383739;
-  --color-ink: #dadada;
-  --color-ink-muted: #9a9ca1;
-}
-
-body {
-  background-color: var(--color-surface-sunken);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-}
-```
-
-- [ ] **Step 4: Import it once, before App's own styles**
-
-In `src/main.tsx`, add as the first import:
-
-```ts
-import "./styles/theme.css";
-```
-
-- [ ] **Step 5: Prove antd still renders — write the probe test**
-
-antd's `Table`, `Slider` and `Popover` are the three most style-sensitive widgets in the app. Create `test/tailwind-antd.spec.tsx`:
-
-```tsx
-import { beforeAll, describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { Popover, Slider, Table } from "antd";
-import { initI18n } from "./test-utils";
-
-beforeAll(async () => {
-  await initI18n();
-});
-
-describe("antd under Tailwind", () => {
-  it("renders a Table with its rows", () => {
-    render(
-      <Table
-        dataSource={[{ key: 1, age: 43 }]}
-        columns={[{ title: "Age", dataIndex: "age", key: "age" }]}
-        pagination={false}
-      />,
-    );
-
-    expect(screen.getByText("Age")).toBeInTheDocument();
-    expect(screen.getByText("43")).toBeInTheDocument();
-  });
-
-  it("renders a Slider with its handle", () => {
-    const { container } = render(<Slider min={0} max={100} defaultValue={20} />);
-
-    expect(container.querySelector(".ant-slider-handle")).not.toBeNull();
-  });
-
-  it("opens a Popover", async () => {
-    const user = userEvent.setup();
-    render(
-      <Popover content={<span>panel body</span>} title="panel" trigger="click">
-        <button>open</button>
-      </Popover>,
-    );
-
-    await user.click(screen.getByRole("button", { name: "open" }));
-
-    expect(await screen.findByText("panel body")).toBeInTheDocument();
-  });
-});
-```
-
-- [ ] **Step 6: Run the probe**
-
-Run: `pnpm test:run`
-Expected: PASS, and `build-smoke.spec.ts` still passes — that one executes the real bundle, so it is what proves the Tailwind plugin did not break the build.
-
-- [ ] **Step 7: Browser check**
-
-```bash
-pnpm build && pnpm preview
-```
-
-Open the preview. Confirm the calculator still renders, the table has borders and padding, the sliders drag, and the donate popover opens. jsdom cannot see any of this — that is why this step exists.
-
-**Gate:** if any widget is visibly broken and not fixable by adjusting the import layers, stop and report. Do not proceed to Task 2.
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add vite.config.ts package.json pnpm-lock.yaml src/styles/theme.css src/main.tsx test/tailwind-antd.spec.tsx
-git commit -m "build: add Tailwind v4 alongside antd, without preflight"
-```
+**Remove from `package.json` (Task 12):** `antd`, `@ant-design/icons`, `sass`. Nothing may import from `antd` after that task.
 
 ---
 
-### Task 2: Feed antd from the same tokens
+### Task 1: shadcn/ui foundation — COMPLETE
 
-**Files:**
-- Create: `src/styles/tokens.ts`
-- Create: `test/tokens.spec.ts`
-- Modify: `src/App.tsx:32-36` (the `ConfigProvider` theme prop)
+Commits: `41813a5`, `15dee05`, `1a53f42`, `ff404d1`.
 
-**Interfaces:**
-- Consumes: `src/styles/theme.css` from Task 1
-- Produces: `export const palette` and `export const antdTokens(isDark: boolean)` from `src/styles/tokens.ts`
+This task was planned as "Tailwind v4 alongside antd (spike + gate)". The spike ran and reported that they could not be reconciled safely, so the task became the antd → shadcn swap's foundation. What follows is the record, not work to redo.
 
-- [ ] **Step 1: Write the failing test**
+**What the spike measured, in a browser, against a production build:**
 
-The risk is drift: two files holding the same hex values that silently diverge. The test parses the CSS and compares, so drift fails the build rather than being caught in review.
+- `bg-black` on a live `.ant-btn` left its computed background unchanged. 904 unlayered antd rules against 3 layered ones; unlayered CSS beats every layered rule regardless of specificity. Every Tailwind class on an antd component was inert, and failed silently.
+- `<StyleProvider layer>` from `@ant-design/cssinjs` fixes it. It was implemented, then discarded with antd — the whole redesign would otherwise rest on a cascade arrangement whose failure mode is "nothing happens, no error".
+- After the swap: `bg-bitcoin` on a Button computes to `rgb(246, 147, 26)`. The utility wins.
+- Table under the constraint the app needs: 53 rows, `maxHeight 250px`, `clientHeight 248`, `scrollHeight 2001`, header `position: sticky; top: 0`, verified still pinned scrolled to age 56.
+- Dark mode, popover anchoring, tab switching and the 420px layout all correct. Console clean on full reload.
+- Bundle with both libraries present, by sourcemap attribution: antd 665 KB, whole shadcn stack 142 KB.
 
-Create `test/tokens.spec.ts`:
+**Delivered:**
 
-```ts
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
-import { palette } from "../src/styles/tokens";
+- Tailwind v4 via `@tailwindcss/vite`, preflight **imported** (shadcn requires it; the original "omit preflight" decision existed only to protect antd).
+- `@/*` path alias in `tsconfig.json` and `vite.config.ts`.
+- `components.json`, `src/lib/utils.ts`, and generated `src/components/ui/`: `button`, `input`, `label`, `popover`, `separator`, `slider`, `switch`, `table`, `tabs`, `tooltip`.
+- `src/styles/theme.css` — Tailwind entry, `@theme` tokens, `@custom-variant dark` on `[data-theme]`.
+- `Table` edited to accept `containerClassName`. A sticky header resolves against its nearest scrollport, and shadcn's wrapper div is always one, so the height cap must land there.
+- shadcn's generated `.dark` block retargeted to `:root[data-theme="dark"]`, so one attribute drives both token sets.
+- `data-theme` moved from a wrapper `div` to `document.documentElement` — the dark token block never matched before, and `body`'s own background cannot resolve a token declared on a descendant.
+- `html * { font-family: monospace !important }` deleted from `App.scss`.
+- The bitcoin accent renamed `--color-bitcoin`; shadcn's `@theme inline` owns `--color-accent` and would have won it silently.
+- `test/tailwind-antd.spec.tsx` replaced by `test/ui-primitives.spec.tsx`.
 
-const css = readFileSync(resolve(import.meta.dirname, "../src/styles/theme.css"), "utf8");
+**State at completion:** tsc 0, lint 0, 32/32 tests, build green.
 
-const cssVar = (name: string, block: "light" | "dark") => {
-  const source =
-    block === "light"
-      ? css.slice(css.indexOf("@theme"), css.indexOf(':root[data-theme="dark"]'))
-      : css.slice(css.indexOf(':root[data-theme="dark"]'));
-  const match = source.match(new RegExp(`--${name}:\\s*([^;]+);`));
-  return match ? match[1].trim() : undefined;
-};
+**Known interim breakage, expected:** preflight now applies to the six surviving `.scss` files, which were written against no reset. The old UI degrades until each component is migrated. Not a defect; do not "fix" it outside the task that replaces the component.
 
-describe("tokens", () => {
-  it("keeps the TypeScript palette in step with theme.css", () => {
-    expect(palette.light.accent).toBe(cssVar("color-accent", "light"));
-    expect(palette.light.surface).toBe(cssVar("color-surface", "light"));
-    expect(palette.light.ink).toBe(cssVar("color-ink", "light"));
-    expect(palette.dark.surface).toBe(cssVar("color-surface", "dark"));
-    expect(palette.dark.ink).toBe(cssVar("color-ink", "dark"));
-  });
+---
 
-  it("hands antd a token object for each theme", () => {
-    expect(antdTokensFor(false).colorPrimary).toBe(palette.light.accent);
-    expect(antdTokensFor(true).colorBgContainer).toBe(palette.dark.surface);
-  });
-});
-```
+### Task 2: VOID — deleted by the antd removal
 
-Add the import for `antdTokensFor` at the top alongside `palette`:
+Was: "Feed antd from the same tokens" — read the `@theme` custom properties back in TypeScript and hand them to antd's `ConfigProvider` `theme.token`, with a test enforcing that the two palettes agree.
 
-```ts
-import { antdTokensFor, palette } from "../src/styles/tokens";
-```
+There is no second theming system left to keep in sync. Tokens live in `theme.css` and nothing mirrors them. `src/styles/tokens.ts` is not created.
 
-- [ ] **Step 2: Run it to confirm it fails**
-
-Run: `node_modules/.bin/vitest run test/tokens.spec.ts`
-Expected: FAIL — `src/styles/tokens.ts` does not exist.
-
-- [ ] **Step 3: Write the implementation**
-
-Create `src/styles/tokens.ts`:
-
-```ts
-/**
- * The same palette as `theme.css`, in a form antd's ConfigProvider can consume.
- * `test/tokens.spec.ts` parses the CSS and fails if the two drift apart.
- */
-export const palette = {
-  light: {
-    accent: "#f6931a",
-    surface: "#ffffff",
-    surfaceSunken: "#f5f5f5",
-    border: "#e3e3e3",
-    ink: "#1f2023",
-    inkMuted: "#63666b",
-  },
-  dark: {
-    accent: "#f6931a",
-    surface: "#2c2c2d",
-    surfaceSunken: "#1f2023",
-    border: "#383739",
-    ink: "#dadada",
-    inkMuted: "#9a9ca1",
-  },
-} as const;
-
-export const antdTokensFor = (isDark: boolean) => {
-  const p = isDark ? palette.dark : palette.light;
-  return {
-    colorPrimary: p.accent,
-    colorBgContainer: p.surface,
-    colorBorder: p.border,
-    colorText: p.ink,
-    colorTextSecondary: p.inkMuted,
-    fontFamily: '"Inter", ui-sans-serif, system-ui, sans-serif',
-  };
-};
-```
-
-- [ ] **Step 4: Run the test to confirm it passes**
-
-Run: `node_modules/.bin/vitest run test/tokens.spec.ts`
-Expected: PASS
-
-- [ ] **Step 5: Wire it into ConfigProvider**
-
-In `src/App.tsx`, replace the `theme` prop:
-
-```tsx
-<ConfigProvider
-  theme={{
-    algorithm: useDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-    token: antdTokensFor(useDarkMode),
-  }}
->
-```
-
-Add the import: `import { antdTokensFor } from "./styles/tokens";`
-
-- [ ] **Step 6: Verify**
-
-Run: `npx tsc --noEmit && pnpm lint && pnpm test:run`
-Expected: all green, 32 tests.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add src/styles/tokens.ts test/tokens.spec.ts src/App.tsx
-git commit -m "feat: drive antd's theme from the same tokens as Tailwind"
-```
+Numbering is deliberately preserved: later tasks and the ledger reference task numbers, and renumbering would invalidate those references for no gain.
 
 ---
 
@@ -539,7 +296,7 @@ git commit -m "feat: add present-value transform outside the calculators"
 ### Task 4: StatTile
 
 **Files:**
-- Create: `src/components/ui/StatTile.tsx`
+- Create: `src/components/common/StatTile.tsx`
 - Create: `test/StatTile.spec.tsx`
 
 **Interfaces:**
@@ -555,7 +312,7 @@ Create `test/StatTile.spec.tsx`:
 ```tsx
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import StatTile from "../src/components/ui/StatTile";
+import StatTile from "../src/components/common/StatTile";
 
 describe("StatTile", () => {
   it("renders its label and value", () => {
@@ -586,7 +343,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the implementation**
 
-Create `src/components/ui/StatTile.tsx`:
+Create `src/components/common/StatTile.tsx`:
 
 ```tsx
 interface StatTileProps {
@@ -598,14 +355,14 @@ interface StatTileProps {
 }
 
 const StatTile = ({ label, value, nominal, size = "normal" }: StatTileProps) => (
-  <div className="flex flex-col gap-0.5 rounded-lg border border-[--color-border] p-3">
-    <span className="text-xs uppercase tracking-wide text-[--color-ink-muted]">{label}</span>
+  <div className="flex flex-col gap-0.5 rounded-lg border border-border p-3">
+    <span className="text-xs uppercase tracking-wide text-ink-muted">{label}</span>
     <span
       className={`font-mono font-bold leading-none ${size === "hero" ? "text-4xl" : "text-lg"}`}
     >
       {value}
     </span>
-    {nominal && <span className="text-xs text-[--color-ink-muted]">{nominal}</span>}
+    {nominal && <span className="text-xs text-ink-muted">{nominal}</span>}
   </div>
 );
 
@@ -620,7 +377,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/components/ui/StatTile.tsx test/StatTile.spec.tsx
+git add src/components/common/StatTile.tsx test/StatTile.spec.tsx
 git commit -m "feat: add StatTile with nominal disclosure"
 ```
 
@@ -629,14 +386,55 @@ git commit -m "feat: add StatTile with nominal disclosure"
 ### Task 5: ScrubField
 
 **Files:**
-- Create: `src/components/ui/ScrubField.tsx`
+- Create: `src/components/common/ScrubField.tsx`
 - Create: `test/ScrubField.spec.tsx`
+- Modify: `src/components/ui/slider.tsx` (forward a label to the thumb)
 
 **Interfaces:**
-- Consumes: nothing
+- Consumes: `Input` and `Slider` from `src/components/ui/`
 - Produces: `ScrubField` with props `{ label: string; name: string; value: number; min: number; max: number; step?: number; unit?: string; onChange: (value: number) => void }`
 
-- [ ] **Step 1: Write the failing test**
+Three facts about the generated `Slider` were established by probing it, not assumed. Use them as written:
+
+1. `aria-label` passed to `<Slider>` lands on the **Root**, which is `role="group"`. The native range input inside gets no accessible name at all.
+2. `aria-label` passed to `Slider.Thumb` **does** reach that input. This is why Step 1 edits the generated component.
+3. In jsdom the thumb carries `visibility: hidden`, because Base UI defers it until it has measured the control and jsdom has no layout engine. Any `getByRole("slider", ...)` therefore needs `{ hidden: true }`. This is a jsdom artifact; a browser exposes the input normally.
+
+Note also that the range input exposes its bounds as native `min`/`max` attributes — **not** `aria-valuemin`/`aria-valuemax`. Assert the attributes that exist.
+
+- [ ] **Step 1: Give the generated Slider a labelled thumb**
+
+Edit `src/components/ui/slider.tsx`. Add `thumbLabel` to the props and pass it to every `Thumb`:
+
+```tsx
+function Slider({
+  className,
+  defaultValue,
+  value,
+  min = 0,
+  max = 100,
+  thumbLabel,
+  ...props
+}: SliderPrimitive.Root.Props & { thumbLabel?: string }) {
+```
+
+and on the `SliderPrimitive.Thumb` inside the map:
+
+```tsx
+<SliderPrimitive.Thumb
+  data-slot="slider-thumb"
+  key={index}
+  // Base UI puts this on the native range input the thumb wraps. Without it
+  // the input has no accessible name — `aria-label` on the Root only names
+  // the wrapping role="group".
+  aria-label={thumbLabel}
+  className="..."   // unchanged
+/>
+```
+
+Leave the rest of the file exactly as generated.
+
+- [ ] **Step 2: Write the failing test**
 
 Create `test/ScrubField.spec.tsx`:
 
@@ -644,7 +442,7 @@ Create `test/ScrubField.spec.tsx`:
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ScrubField from "../src/components/ui/ScrubField";
+import ScrubField from "../src/components/common/ScrubField";
 
 describe("ScrubField", () => {
   it("shows one accessible control for the value", () => {
@@ -652,7 +450,8 @@ describe("ScrubField", () => {
       <ScrubField label="Annual buy" name="annualBuy" value={12000} min={0} max={200000} onChange={() => {}} />,
     );
 
-    expect(screen.getByRole("spinbutton", { name: "Annual buy" })).toHaveValue("12000");
+    // jest-dom coerces a number input's value, so this is a number, not "12000".
+    expect(screen.getByRole("spinbutton", { name: "Annual buy" })).toHaveValue(12000);
   });
 
   it("reports typed changes", async () => {
@@ -675,25 +474,29 @@ describe("ScrubField", () => {
       <ScrubField label="Growth" name="growthRate" value={20} min={0} max={100} onChange={() => {}} />,
     );
 
-    const slider = screen.getByRole("slider", { name: "Growth" });
-    expect(slider).toHaveAttribute("aria-valuemin", "0");
-    expect(slider).toHaveAttribute("aria-valuemax", "100");
+    // `hidden: true`: Base UI keeps the thumb at visibility:hidden until it
+    // measures the control, which never happens in jsdom.
+    const slider = screen.getByRole("slider", { name: "Growth", hidden: true });
+
+    expect(slider).toHaveAttribute("min", "0");
+    expect(slider).toHaveAttribute("max", "100");
     expect(slider).toHaveAttribute("aria-valuenow", "20");
   });
 });
 ```
 
-- [ ] **Step 2: Run it to confirm it fails**
+- [ ] **Step 3: Run it to confirm it fails**
 
 Run: `node_modules/.bin/vitest run test/ScrubField.spec.tsx`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Write the implementation**
+- [ ] **Step 4: Write the implementation**
 
-Create `src/components/ui/ScrubField.tsx`. The wrapper around the slider is what gives it a 44px touch target without growing the visible track.
+Create `src/components/common/ScrubField.tsx`:
 
 ```tsx
-import { InputNumber, Slider } from "antd";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 
 interface ScrubFieldProps {
   label: string;
@@ -723,45 +526,48 @@ const ScrubField = ({
   unit,
   onChange,
 }: ScrubFieldProps) => {
-  const emit = (next: number | null) => {
-    if (next === null || Number.isNaN(next)) {
+  const emit = (next: number) => {
+    if (Number.isNaN(next)) {
       return;
     }
     onChange(next);
   };
 
   return (
-    <div className="rounded-lg border border-[--color-border] px-3 pt-2 pb-1">
+    <div className="rounded-lg border border-border px-3 pt-2 pb-1">
       <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={name} className="text-xs text-[--color-ink-muted]">
+        <label htmlFor={name} className="text-xs text-ink-muted">
           {label}
         </label>
-        <InputNumber
-          id={name}
-          name={name}
-          aria-label={label}
-          className="font-mono"
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          suffix={unit}
-          variant="borderless"
-          onChange={emit}
-        />
+        <div className="flex items-baseline gap-1">
+          <Input
+            id={name}
+            name={name}
+            type="number"
+            className="w-28 border-0 bg-transparent p-0 text-right font-mono shadow-none focus-visible:ring-0"
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            onChange={(e) => emit(e.target.valueAsNumber)}
+          />
+          {unit && <span className="text-xs text-ink-muted">{unit}</span>}
+        </div>
       </div>
+      {/* The visible track is 4px. The negative margin buys a ~44px touch
+          target without growing it — the thumb's own `after:-inset-2` is
+          about 28px, which is under the guideline. */}
       <div className="-my-2 py-2">
         <Slider
-          aria-label={label}
-          value={value}
+          thumbLabel={label}
+          value={[value]}
           min={min}
           max={max}
           step={step}
-          tooltip={{ open: false }}
-          onChange={emit}
+          onValueChange={(next) => emit(Array.isArray(next) ? next[0] : next)}
         />
       </div>
-      <div className="flex justify-between font-mono text-[10px] text-[--color-ink-muted]">
+      <div className="flex justify-between font-mono text-[10px] text-ink-muted">
         <span>{min}</span>
         <span>{max}</span>
       </div>
@@ -772,15 +578,15 @@ const ScrubField = ({
 export default ScrubField;
 ```
 
-- [ ] **Step 4: Run the tests**
+- [ ] **Step 5: Run the tests**
 
 Run: `node_modules/.bin/vitest run test/ScrubField.spec.tsx`
-Expected: PASS. If antd's `Slider` does not forward `aria-label`, wrap it in a `<div role="group" aria-label={label}>` and query within that instead — adjust the test to match what the widget actually renders, and note it in the commit.
+Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/components/ui/ScrubField.tsx test/ScrubField.spec.tsx
+git add src/components/common/ScrubField.tsx src/components/ui/slider.tsx test/ScrubField.spec.tsx
 git commit -m "feat: add ScrubField merging a number input with its slider"
 ```
 
@@ -1141,7 +947,7 @@ Create `src/components/Results/StrategyCard.tsx`:
 import { ProjectionView } from "../../models/ProjectionView";
 import { toBtc, toUsd } from "../../constants";
 import ProjectionChart from "./ProjectionChart";
-import StatTile from "../ui/StatTile";
+import StatTile from "../common/StatTile";
 
 interface StrategyCardProps {
   view: ProjectionView;
@@ -1160,15 +966,15 @@ const StrategyCard = ({ view, title, caption, selected, onSelect }: StrategyCard
       aria-pressed={selected}
       onClick={onSelect}
       className={`flex w-full flex-col gap-3 rounded-xl border p-4 text-left transition ${
-        selected ? "border-[--color-accent] bg-[--color-accent-soft]" : "border-[--color-border]"
+        selected ? "border-bitcoin bg-bitcoin-soft" : "border-border"
       }`}
     >
       <div>
-        <div className="text-xs uppercase tracking-wide text-[--color-ink-muted]">{title}</div>
+        <div className="text-xs uppercase tracking-wide text-ink-muted">{title}</div>
         <div className="font-mono text-3xl font-extrabold leading-none">
           {view.canRetire ? view.retirementAge : "—"}
         </div>
-        <div className="text-xs text-[--color-ink-muted]">{caption}</div>
+        <div className="text-xs text-ink-muted">{caption}</div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -1255,11 +1061,16 @@ git commit -m "feat: add the side-by-side strategy comparison"
 
 **Files:**
 - Modify: `src/components/Results/tabs/TableTab.tsx` (whole file)
+- Delete: `src/components/Results/tabs/TableTab.scss`
 - Create: `test/TableTab.spec.tsx`
 
 **Interfaces:**
-- Consumes: `ProjectionView`
+- Consumes: `ProjectionView`; `Table`, `Popover`, `Button`, `Checkbox`, `Label` from `src/components/ui/`
 - Produces: `TableTab` props change from `CalculationResult` to `{ view: ProjectionView }`
+
+antd's `Table` took a `columns` array and rendered itself. shadcn's is plain table markup, so the column definitions stay as data — they still drive the column chooser — but the rows are mapped explicitly. That is more lines and no lost behaviour: the only antd `Table` features this app used were `pagination={false}`, `bordered` and `scroll={{ y }}`.
+
+`scroll={{ y: 260 }}` becomes `containerClassName="max-h-[260px]"` plus `sticky top-0` on the header cells. The cap must land on the container, not the table — see the comment in `src/components/ui/table.tsx`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1267,7 +1078,7 @@ Create `test/TableTab.spec.tsx`:
 
 ```tsx
 import { beforeAll, describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { initI18n } from "./test-utils";
 import TableTab from "../src/components/Results/tabs/TableTab";
 import { toProjectionView } from "../src/services/presentValue";
@@ -1295,16 +1106,16 @@ describe("TableTab", () => {
     render(<TableTab view={view} />);
 
     // Both faces of the figure are present, so the discounting is never silent.
-    expect(screen.getByText(/savings \(today\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/savings \(nominal\)/i)).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /savings \(today\)/i })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /savings \(nominal\)/i })).toBeInTheDocument();
   });
 
   it("renders one row per projected year", () => {
     const view = toProjectionView(calculateOptimal(INPUT, 79_350.17), INPUT);
     const { container } = render(<TableTab view={view} />);
 
-    const rows = container.querySelectorAll(".ant-table-tbody tr[data-row-key]");
-    expect(rows).toHaveLength(view.points.length);
+    const body = container.querySelector('[data-slot="table-body"]')!;
+    expect(within(body as HTMLElement).getAllByRole("row")).toHaveLength(view.points.length);
   });
 });
 ```
@@ -1316,89 +1127,134 @@ Expected: FAIL — `TableTab` still takes `CalculationResult`.
 
 - [ ] **Step 3: Rewrite TableTab**
 
-Replace the whole of `src/components/Results/tabs/TableTab.tsx`. Keep the existing column-toggle popover; change the data source to `ProjectionView` and add the nominal column. Delete the `./TableTab.scss` import and move its two rules to utilities.
+Replace the whole of `src/components/Results/tabs/TableTab.tsx`. Delete the `./TableTab.scss` import; its rules become utilities.
 
 ```tsx
-import { Button, Checkbox, CheckboxOptionType, Popover, Table, TableProps } from "antd";
 import { useState } from "react";
-import { SettingOutlined } from "@ant-design/icons";
+import { Settings2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ProjectionPoint, ProjectionView } from "../../../models/ProjectionView";
 import { toUsd } from "../../../constants";
+
+interface Column {
+  key: string;
+  title: string;
+  /** Rendered cell. Mono is applied here, per column, rather than table-wide. */
+  render: (p: ProjectionPoint) => React.ReactNode;
+}
 
 const TableTab = ({ view }: { view: ProjectionView }) => {
   const [t] = useTranslation();
 
-  const columns: TableProps<ProjectionPoint>["columns"] = [
-    { title: t("table.year"), dataIndex: "year", key: "year", width: "5rem" },
-    { title: t("table.age"), dataIndex: "age", key: "age", width: "4rem" },
+  const columns: Column[] = [
+    { key: "year", title: t("table.year"), render: (p) => p.year },
+    { key: "age", title: t("table.age"), render: (p) => p.age },
     {
-      title: t("table.bitcoin-price"),
-      dataIndex: "bitcoinPrice",
       key: "bitcoinPrice",
-      render: (n: number) => <span className="font-mono">{toUsd(n)}</span>,
+      title: t("table.bitcoin-price"),
+      render: (p) => <span className="font-mono">{toUsd(p.bitcoinPrice)}</span>,
     },
     {
-      title: "Savings (today)",
-      dataIndex: "savingsFiatReal",
       key: "savingsFiatReal",
-      render: (n: number) => <span className="font-mono">{toUsd(n)}</span>,
+      title: "Savings (today)",
+      render: (p) => <span className="font-mono">{toUsd(p.savingsFiatReal)}</span>,
     },
     {
-      title: "Savings (nominal)",
-      dataIndex: "savingsFiat",
       key: "savingsFiat",
-      render: (n: number) => (
-        <span className="font-mono text-[--color-ink-muted]">{toUsd(n)}</span>
+      title: "Savings (nominal)",
+      render: (p) => (
+        <span className="font-mono text-ink-muted">{toUsd(p.savingsFiat)}</span>
       ),
     },
     {
-      title: t("table.accumulated-savings-btc"),
-      dataIndex: "savingsBitcoin",
       key: "savingsBitcoin",
-      render: (n: number) => <span className="font-mono">{n.toFixed(8)}</span>,
+      title: t("table.accumulated-savings-btc"),
+      render: (p) => <span className="font-mono">{p.savingsBitcoin.toFixed(8)}</span>,
     },
     {
-      title: t("table.you-bought"),
-      dataIndex: "bitcoinFlow",
       key: "bitcoinFlow",
-      render: (n: number) => <span className="font-mono">{n.toFixed(8)}</span>,
+      title: t("table.you-bought"),
+      render: (p) => <span className="font-mono">{p.bitcoinFlow.toFixed(8)}</span>,
     },
   ];
 
-  const [checkedList, setCheckedList] = useState(columns.map((c) => c.key as string));
-  const options = columns.map(({ key, title }) => ({ label: title, value: key }));
-  const shown = columns.map((c) => ({ ...c, hidden: !checkedList.includes(c.key as string) }));
+  const [shownKeys, setShownKeys] = useState(columns.map((c) => c.key));
+  const shown = columns.filter((c) => shownKeys.includes(c.key));
+
+  const toggle = (key: string, on: boolean) =>
+    setShownKeys((keys) => (on ? [...keys, key] : keys.filter((k) => k !== key)));
 
   return (
-    <div className="overflow-x-auto">
+    <div className="space-y-2">
       <Table
-        rowKey="key"
-        dataSource={view.points}
-        columns={shown}
-        pagination={false}
-        bordered
-        scroll={{ y: 260 }}
-        footer={() => (
-          <div className="flex justify-end">
-            <Popover
-              trigger="click"
-              placement="topRight"
-              title={t("table.config.title")}
-              content={
-                <Checkbox.Group
-                  className="flex max-w-40 flex-col"
-                  value={checkedList}
-                  options={options as CheckboxOptionType[]}
-                  onChange={(v) => setCheckedList(v as string[])}
-                />
-              }
-            >
-              <Button aria-label="Choose columns" icon={<SettingOutlined />} />
-            </Popover>
-          </div>
-        )}
-      />
+        containerClassName="max-h-[260px] rounded-md border"
+        className="border-separate border-spacing-0"
+      >
+        <TableHeader>
+          <TableRow>
+            {shown.map((c) => (
+              <TableHead
+                key={c.key}
+                className="sticky top-0 z-10 border-b bg-background whitespace-nowrap"
+              >
+                {c.title}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {view.points.map((p) => (
+            <TableRow key={p.year}>
+              {shown.map((c) => (
+                <TableCell key={c.key} className="border-b whitespace-nowrap">
+                  {c.render(p)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <div className="flex justify-end">
+        <Popover>
+          <PopoverTrigger
+            render={
+              <Button variant="outline" size="icon" aria-label="Choose columns">
+                <Settings2 />
+              </Button>
+            }
+          />
+          <PopoverContent align="end" className="w-56">
+            <p className="mb-2 text-sm font-medium">{t("table.config.title")}</p>
+            <div className="flex flex-col gap-2">
+              {columns.map((c) => (
+                <div key={c.key} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`col-${c.key}`}
+                    checked={shownKeys.includes(c.key)}
+                    onCheckedChange={(on) => toggle(c.key, Boolean(on))}
+                  />
+                  <Label htmlFor={`col-${c.key}`} className="text-sm font-normal">
+                    {c.title}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
     </div>
   );
 };
@@ -1417,7 +1273,11 @@ Expected: PASS
 rm src/components/Results/tabs/TableTab.scss
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Browser check**
+
+Build and preview. Confirm the header stays pinned while the body scrolls, the column chooser opens and hides a column, and the table — not the page — is what scrolls horizontally at 420px.
+
+- [ ] **Step 7: Commit**
 
 ```bash
 git add -A src/components/Results/tabs test/TableTab.spec.tsx
@@ -1513,7 +1373,7 @@ const StrategyDetail = ({ view }: { view: ProjectionView }) => {
   const [unit, setUnit] = useState<ChartUnit>("btc");
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-[--color-border] p-4">
+    <section className="flex flex-col gap-3 rounded-xl border border-border p-4">
       {view.optimized && (
         <div className="flex gap-2" role="group" aria-label="Chart unit">
           {(["btc", "fiat"] as const).map((u) => (
@@ -1524,8 +1384,8 @@ const StrategyDetail = ({ view }: { view: ProjectionView }) => {
               onClick={() => setUnit(u)}
               className={`rounded-full px-3 py-1 font-mono text-xs ${
                 unit === u
-                  ? "bg-[--color-accent] text-black"
-                  : "border border-[--color-border] text-[--color-ink-muted]"
+                  ? "bg-bitcoin text-black"
+                  : "border border-border text-ink-muted"
               }`}
             >
               {u === "btc" ? "₿" : "$"}
@@ -1631,11 +1491,11 @@ Create `src/components/Input/InputBar.tsx`. Port the query-string state from `In
 
 ```tsx
 import { useEffect } from "react";
-import { InputNumber } from "antd";
+import { Input } from "@/components/ui/input";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { InputData } from "../../models/InputData";
-import ScrubField from "../ui/ScrubField";
+import ScrubField from "../common/ScrubField";
 
 const num = (params: URLSearchParams, key: string, fallback: number) => {
   const raw = params.get(key);
@@ -1656,6 +1516,11 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
   const desiredRetirementIncome = num(searchParams, "desiredRetirementIncome", 120_000);
 
   const set = (key: string, value: number) => {
+    // An emptied number input reports NaN. Ignore it rather than writing
+    // "NaN" into the query string, which would break shared links.
+    if (!Number.isFinite(value)) {
+      return;
+    }
     const next = new URLSearchParams(searchParams);
     next.set(key, String(value));
     setSearchParams(next, { replace: true });
@@ -1686,46 +1551,49 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-xs uppercase tracking-wide text-[--color-ink-muted]">
+        <legend className="text-xs uppercase tracking-wide text-ink-muted">
           About you
         </legend>
         <label className="flex items-center justify-between gap-2 text-xs">
           {t("input.current-age")}
-          <InputNumber
+          <Input
+            type="number"
             aria-label="Current age"
-            className="font-mono"
+            className="w-28 text-right font-mono"
             min={0}
             max={120}
             value={currentAge}
-            onChange={(v) => v !== null && set("currentAge", v)}
+            onChange={(e) => set("currentAge", e.target.valueAsNumber)}
           />
         </label>
         <label className="flex items-center justify-between gap-2 text-xs">
           {t("input.life-expectancy")}
-          <InputNumber
+          <Input
+            type="number"
             aria-label="Life expectancy"
-            className="font-mono"
+            className="w-28 text-right font-mono"
             min={1}
             max={130}
             value={lifeExpectancy}
-            onChange={(v) => v !== null && set("lifeExpectancy", v)}
+            onChange={(e) => set("lifeExpectancy", e.target.valueAsNumber)}
           />
         </label>
       </fieldset>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-xs uppercase tracking-wide text-[--color-ink-muted]">
+        <legend className="text-xs uppercase tracking-wide text-ink-muted">
           Your bitcoin
         </legend>
         <label className="flex items-center justify-between gap-2 text-xs">
           {t("input.savings-btc")}
-          <InputNumber
+          <Input
+            type="number"
             aria-label="Bitcoin held"
-            className="font-mono"
+            className="w-28 text-right font-mono"
             min={0}
             step={0.01}
             value={currentSavings}
-            onChange={(v) => v !== null && set("currentSavings", v)}
+            onChange={(e) => set("currentSavings", e.target.valueAsNumber)}
           />
         </label>
         <ScrubField
@@ -1741,7 +1609,7 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
       </fieldset>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-xs uppercase tracking-wide text-[--color-ink-muted]">
+        <legend className="text-xs uppercase tracking-wide text-ink-muted">
           Assumptions and goal
         </legend>
         <ScrubField
@@ -1812,8 +1680,8 @@ This is the task where the new UI replaces the old one. Everything before it was
 Replace the whole of `src/components/Calculator.tsx`:
 
 ```tsx
-import { useState } from "react";
-import { Spin } from "antd";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useBitcoinPrice } from "../hooks/useBitcoinPrice";
 import { InputData } from "../models/InputData";
@@ -1828,6 +1696,7 @@ import StrategyDetail from "./Results/StrategyDetail";
 const REFRESH_INTERVAL_MS = 1000 * 60 * 10;
 
 const Calculator = () => {
+  const [input, setInput] = useState<InputData>();
   const [conservative, setConservative] = useState<ProjectionView>();
   const [optimized, setOptimized] = useState<ProjectionView>();
   const [selected, setSelected] = useState<StrategyKey>("optimized");
@@ -1837,23 +1706,38 @@ const Calculator = () => {
   // Both strategies are computed on every change now. The switch used to pick
   // which one to calculate; the comparison shows both, so it picks which one
   // the detail panel expands.
-  const refresh = (data: InputData) => {
-    if (!btcPrice) {
+  //
+  // The projections derive from the inputs AND the price, and `useBitcoinPrice`
+  // refetches every ten minutes. Recomputing only when the inputs change would
+  // leave both projections built on a price the app has stopped displaying, so
+  // the last input is held in state and the effect depends on both.
+  useEffect(() => {
+    if (!input || !btcPrice || btcPrice <= 0) {
       return;
     }
-    setConservative(toProjectionView(calculate({ ...data, optimized: false }, btcPrice), data));
-    setOptimized(toProjectionView(calculateOptimal({ ...data, optimized: true }, btcPrice), data));
-  };
+    setConservative(toProjectionView(calculate({ ...input, optimized: false }, btcPrice), input));
+    setOptimized(toProjectionView(calculateOptimal({ ...input, optimized: true }, btcPrice), input));
+  }, [input, btcPrice]);
 
   if (!btcPrice || btcPrice <= 0) {
-    return <Spin fullscreen />;
+    return (
+      <div
+        role="status"
+        aria-label="Loading the bitcoin price"
+        className="flex min-h-[60vh] items-center justify-center"
+      >
+        <Loader2 className="size-8 animate-spin text-ink-muted" />
+      </div>
+    );
   }
 
   const selectedView = selected === "optimized" ? optimized : conservative;
 
   return (
     <div className="flex flex-col gap-4">
-      <InputBar onCalculate={refresh} />
+      {/* `setInput` directly: InputBar's effect depends on the primitive input
+          values, so it fires once per real change, not once per render. */}
+      <InputBar onCalculate={setInput} />
 
       {conservative && optimized && (
         <>
@@ -1916,23 +1800,27 @@ git commit -m "feat: compute both strategies and show them side by side"
 
 ---
 
-### Task 12: Delete what the redesign replaced
+### Task 12: Delete what the redesign replaced, and remove antd
+
+This task ends with zero `antd` imports and zero `.scss` files. It is wide but mechanical: everything it touches has already been superseded, except the four small call sites in Step 4.
 
 **Files:**
 - Delete: `src/components/Results/tabs/Result.tsx`, `Summary.tsx`, `OptimizedSummary.tsx`
 - Delete: `src/components/Results/InfoBox.tsx`, `InfoBox.scss`
 - Delete: `src/components/Input/InputPanel.tsx`, `InputPanel.scss`
 - Delete: `src/models/LineChartProps.ts`, `src/components/Results/tabs/LineChart.tsx`, `ChartTab.tsx`
-- Delete: `src/App.scss`, `src/components/Calculator.scss`
-- Modify: `src/App.tsx`, `src/components/Misc/Donate.tsx`, `src/components/Input/ExplanatoryOverlay.tsx`
+- Delete: `src/App.scss`, `src/components/Calculator.scss`, `Donate.scss`, `ExplanatoryOverlay.scss`
+- Create: `src/components/common/BrandIcons.tsx`
+- Modify: `src/App.tsx`, `src/components/Misc/Donate.tsx`, `src/components/Misc/OnChain.tsx`, `src/components/Results/tabs/AnnualBudgetExplanation.tsx`, `src/components/Input/ExplanatoryOverlay.tsx`
+- Modify: `package.json`
 
-- [ ] **Step 1: Confirm nothing imports them**
+- [ ] **Step 1: Confirm nothing imports what is about to go**
 
 ```bash
-grep -rn "InfoBox\|OptimizedSummary\|InputPanel\|LineChartProps\|ChartTab\|Result\b" src --include=*.tsx --include=*.ts
+grep -rn "InfoBox\|OptimizedSummary\|InputPanel\|LineChartProps\|ChartTab" src --include='*.tsx' --include='*.ts'
 ```
 
-Expected: no hits outside the files being deleted. If `Result` still appears, it is `CalculationResult` — check the match before acting.
+Expected: no hits outside the files being deleted.
 
 - [ ] **Step 2: Delete**
 
@@ -1945,47 +1833,269 @@ git rm src/components/Results/tabs/Result.tsx src/components/Results/tabs/Summar
        src/App.scss src/components/Calculator.scss
 ```
 
-- [ ] **Step 3: Port App.tsx to utilities**
+- [ ] **Step 3: Add the QR dependency and the brand marks**
 
-Remove `import "./App.scss";` from `src/App.tsx` and replace the layout classes. The `.title` class must stay as a class name — `test/App.spec.tsx` scopes its switch query to `.title`.
-
-```tsx
-    <div data-theme={userTheme} className="min-h-screen">
-      {/* ... ConfigProvider ... */}
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="title flex items-center justify-center gap-2 py-4 text-2xl">
-```
-
-and the signature row:
-
-```tsx
-          <div className="flex items-center justify-end gap-1.5 py-4 text-sm font-medium">
-```
-
-- [ ] **Step 4: Port the two remaining stylesheets**
-
-`Donate.scss` and `ExplanatoryOverlay.scss` hold one rule each. Replace the imports with utilities on the elements — `.donate-content` becomes `flex min-h-[270px] min-w-[270px] flex-col items-center justify-center`, `.explanatory-overlay` becomes `max-w-[400px]`, its title `font-extrabold underline`. Then delete both files.
-
-Note: `test/Donate.spec.tsx` asserts `document.querySelector(".donate-content canvas")`. Keep the `donate-content` class name on the wrapper alongside the utilities, or update that assertion — either is fine, but the test must pass.
-
-- [ ] **Step 5: Verify nothing is left**
+`QRCode` is the one antd component with no shadcn equivalent.
 
 ```bash
-find src -name "*.scss"
+pnpm add qrcode.react
+```
+
+`lucide-react` 1.x removed brand icons — there is no `Github` and no `Twitter` export. Verify before reaching for one:
+
+```bash
+node --input-type=module -e 'import * as L from "lucide-react"; console.log("Github" in L, "Moon" in L)'
+```
+
+Expected: `false true`.
+
+The two marks in the signature row become inline SVG. Create `src/components/common/BrandIcons.tsx` exactly as below — the path data is from simple-icons (`siGithub.path`, `siX.path`, v15) and is reproduced here so no dependency is added for two one-off marks:
+
+```tsx
+/**
+ * Brand marks as inline SVG. lucide dropped brand icons in 1.x, and each of
+ * these is used once, so a package for them is not worth carrying.
+ * Path data: simple-icons, slugs `github` and `x`.
+ */
+const GITHUB_PATH =
+  "M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12";
+
+const X_PATH =
+  "M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z";
+
+const BrandIcon = ({ d, className = "" }: { d: string; className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className={`size-4 fill-current ${className}`}>
+    <path d={d} />
+  </svg>
+);
+
+export const GithubIcon = (props: { className?: string }) => (
+  <BrandIcon d={GITHUB_PATH} {...props} />
+);
+
+export const XIcon = (props: { className?: string }) => <BrandIcon d={X_PATH} {...props} />;
+```
+
+Both are decorative — each sits inside an `<a>` that gets its own `aria-label` in Step 4, so `aria-hidden` on the SVG is correct and the link is what a screen reader announces.
+
+- [ ] **Step 4: Port the four remaining antd call sites**
+
+`src/components/Misc/OnChain.tsx` — `QRCodeCanvas`, not `QRCodeSVG`. `test/Donate.spec.tsx` asserts `.donate-content canvas`, and switching to SVG breaks it:
+
+```tsx
+import { QRCodeCanvas } from "qrcode.react";
+
+const OnChain = () => (
+  <QRCodeCanvas value="bc1q8y92hwx02nxs5p6qkdm2322vvh55h3wkqpnrye" size={256} />
+);
+
+export default OnChain;
+```
+
+`src/components/Misc/Donate.tsx` — keep the `donate-content` class name; the test scopes to it. Delete the `./Donate.scss` import; its one rule becomes the utilities below:
+
+```tsx
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import DonateOnChain from "./OnChain";
+
+const Donate = () => {
+  const [t] = useTranslation();
+
+  return (
+    <Popover>
+      <PopoverTrigger render={<Button size="sm">{t("donate.donate")}</Button>} />
+      <PopoverContent align="start" side="top" className="w-auto">
+        <PopoverTitle className="mb-2 text-sm font-medium">
+          {t("donate.qrcode.title")}
+        </PopoverTitle>
+        <div className="donate-content flex min-h-[270px] min-w-[270px] flex-col items-center justify-center">
+          <DonateOnChain />
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+export default Donate;
+```
+
+`src/components/Results/tabs/AnnualBudgetExplanation.tsx` — the trigger was a bare icon with no accessible name. It becomes a real button:
+
+```tsx
+import { CircleHelp } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+const AnnualBudgetExplanation = () => {
+  const [t] = useTranslation();
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <button type="button" aria-label={t("annual-budget-explanation.title")}>
+            <CircleHelp className="size-4 text-bitcoin" />
+          </button>
+        }
+      />
+      <PopoverContent className="max-w-[400px]">
+        <PopoverTitle className="mb-2 font-extrabold underline">
+          {t("annual-budget-explanation.title")}
+        </PopoverTitle>
+        <div>{t("annual-budget.explanation.text")}</div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+export default AnnualBudgetExplanation;
+```
+
+`src/App.tsx` — drop `ConfigProvider` and `theme` entirely; tokens do that job now. The `.title` class name stays, because `test/App.spec.tsx` scopes its switch query to it.
+
+```tsx
+import { useTranslation } from "react-i18next";
+import { useLayoutEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
+import useLocalStorage from "use-local-storage";
+import { Switch } from "@/components/ui/switch";
+import { GithubIcon, XIcon } from "@/components/common/BrandIcons";
+import Calculator from "./components/Calculator";
+import Donate from "./components/Misc/Donate";
+
+function App() {
+  const [t] = useTranslation();
+  const defaultDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const [, setUserTheme] = useLocalStorage("theme", defaultDark ? "dark" : "light");
+  const [useDarkMode, setUseDarkMode] = useState(defaultDark);
+
+  useLayoutEffect(() => {
+    // `data-theme` lives on <html>: theme.css resolves its dark tokens against
+    // `:root[data-theme="dark"]`, and <body>'s own background cannot read a
+    // token declared on one of its descendants.
+    const nextTheme = useDarkMode ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    setUserTheme(nextTheme);
+  }, [setUserTheme, useDarkMode]);
+
+  return (
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="title flex items-center justify-center gap-2 py-4 text-2xl">
+          <img src="/bitcoin-logo2.png" width="40" alt="" />
+          <span>{t("app.title")}</span>
+          <span className="flex items-center gap-1.5">
+            <Sun className="size-4" aria-hidden="true" />
+            <Switch
+              aria-label={t("app.theme-toggle")}
+              checked={useDarkMode}
+              onCheckedChange={setUseDarkMode}
+            />
+            <Moon className="size-4" aria-hidden="true" />
+          </span>
+        </div>
+
+        <Calculator />
+
+        <div className="flex items-center justify-end gap-1.5 py-4 text-sm font-medium">
+          <span>by</span>
+          <a target="blank" href="https://github.com/pampeanodev">
+            @pampeanodev
+          </a>
+          <a target="blank" href="https://x.com/pampeanodev" aria-label="X">
+            <XIcon />
+          </a>
+          <a
+            target="blank"
+            href="https://primal.net/p/npub16r9fy3936x9pf9sk020zt48ntpp809lk9xf5wldzhlqu7x8y3t9shy8j7x"
+            aria-label="Nostr"
+          >
+            <img src="https://nostr.how/images/nostrich-150.webp" width={16} alt="" />
+          </a>
+          <a
+            target="_blank"
+            href="https://github.com/pampeanodev/btcretirementcalc"
+            aria-label="GitHub"
+          >
+            <GithubIcon />
+          </a>
+          <Donate />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+```
+
+`document.body.classList` no longer carries `dark` — nothing reads it once `App.scss` is gone.
+
+Add `"app.theme-toggle"` to every locale file under `src/locales/`. **The English value must be exactly `Dark mode`** — Task 13 queries the switch by that accessible name. A missing key renders the key itself, which is visible in the UI but would fail that test rather than this one, so add it here.
+
+- [ ] **Step 5: Port the last stylesheet and delete the rest**
+
+`ExplanatoryOverlay.scss` holds one rule: `.explanatory-overlay` becomes `max-w-[400px]` on the element in `src/components/Input/ExplanatoryOverlay.tsx`. Then:
+
+```bash
+git rm src/components/Misc/Donate.scss src/components/Input/ExplanatoryOverlay.scss
+find src -name '*.scss'
 ```
 
 Expected: no output.
 
-- [ ] **Step 6: Run the whole suite**
+- [ ] **Step 6: Remove antd**
+
+```bash
+pnpm remove antd @ant-design/icons sass
+```
+
+`sass` goes with the last `.scss` file. If `pnpm remove` reports any of them missing, that is fine — confirm with the check in Step 7 rather than reinstalling.
+
+- [ ] **Step 7: Prove it is gone**
+
+```bash
+grep -rn "from \"antd\"\|from \"@ant-design" src test
+find src -name '*.scss'
+node -e 'const p=require("./package.json");const bad=["antd","@ant-design/icons","sass"].filter(k=>p.dependencies?.[k]||p.devDependencies?.[k]);console.log(bad.length?"STILL PRESENT: "+bad.join(", "):"clean")'
+```
+
+All three must come back empty / `clean`.
+
+- [ ] **Step 8: Run the whole suite**
 
 Run: `npx tsc --noEmit && pnpm lint && pnpm test:run`
-Expected: green.
+Expected: green. `test/build-smoke.spec.ts` is the one that matters here — removing a dependency this large is exactly the change that breaks a bundle without breaking a unit test.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 9: Measure what it bought**
+
+```bash
+pnpm build
+```
+
+Record the bundle size in the commit message. It was 1290 KB with antd; the projection is roughly 800 KB. If it did not drop by at least 400 KB, something still pulls antd in — find it before committing.
+
+- [ ] **Step 10: Browser check**
+
+Preview the production build. The whole app, not one component: header and theme toggle, both strategy cards, the detail chart, the table with its column chooser, and the donate popover with its QR canvas. This is the first build with no antd in it at all.
+
+- [ ] **Step 11: Commit**
 
 ```bash
 git add -A
-git commit -m "refactor: delete the components and stylesheets the redesign replaced"
+git commit -m "refactor: remove antd and delete what the redesign replaced"
 ```
 
 ---
@@ -1993,18 +2103,15 @@ git commit -m "refactor: delete the components and stylesheets the redesign repl
 ### Task 13: Accessibility and the final responsive pass
 
 **Files:**
-- Modify: `src/App.tsx` (theme switch label)
 - Modify: `test/App.spec.tsx`
 
-- [ ] **Step 1: Give the theme switch an accessible name**
+The theme switch already carries `aria-label={t("app.theme-toggle")}` — Task 12 added it when it ported `App.tsx` off antd. Confirm the English value resolves to `Dark mode` before changing the test:
 
-In `src/App.tsx`, add to the `Switch`:
-
-```tsx
-                aria-label="Dark mode"
+```bash
+grep -rn "theme-toggle" src/locales
 ```
 
-- [ ] **Step 2: Simplify the test that worked around its absence**
+- [ ] **Step 1: Simplify the test that worked around its absence**
 
 In `test/App.spec.tsx`, the theme toggle test scopes by `.title` because the switches had no names. Replace that query:
 
@@ -2014,12 +2121,12 @@ In `test/App.spec.tsx`, the theme toggle test scopes by `.title` because the swi
 
 and drop the `header`/`within` lines and the now-unused `within` import.
 
-- [ ] **Step 3: Run the suite**
+- [ ] **Step 2: Run the suite**
 
 Run: `npx tsc --noEmit && pnpm lint && pnpm test:run`
 Expected: green.
 
-- [ ] **Step 4: Full browser pass**
+- [ ] **Step 3: Full browser pass**
 
 ```bash
 pnpm build && pnpm preview
@@ -2037,18 +2144,18 @@ Walk the checklist at 1440px, 900px and 390px, in both themes:
 
 Fix what you find, then re-run the suite.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add -A
-git commit -m "fix: label the theme switch and settle the responsive pass"
+git commit -m "fix: settle the accessibility and responsive passes"
 ```
 
 ---
 
 ## Self-Review
 
-**Spec coverage:** Tailwind and preflight → Task 1. Tokens feeding antd → Task 2. Present value outside the calculators → Task 3. StatTile → 4. ScrubField and the merged sliders → 5. Both chart variants and the unit toggle → 6 and 9. Both strategies computed → 11. Comparison layout → 7. Nominal disclosure → 4 (tile), 6 (tooltip), 8 (table column). Responsive per-region → 11 and 13. Deleting `Summary`/`OptimizedSummary`/SCSS → 12. Accessibility → 13.
+**Spec coverage:** Tailwind, preflight and the shadcn foundation → Task 1 (complete). Task 2 is void — there is no second theming system to feed once antd is gone. Removing antd entirely → Task 12. Present value outside the calculators → Task 3. StatTile → 4. ScrubField and the merged sliders → 5. Both chart variants and the unit toggle → 6 and 9. Both strategies computed → 11. Comparison layout → 7. Nominal disclosure → 4 (tile), 6 (tooltip), 8 (table column). Responsive per-region → 11 and 13. Deleting `Summary`/`OptimizedSummary`/SCSS → 12. Accessibility → 13.
 
 **Known gap:** the spec's `InputGroup` component is not built as a separate file; Task 10 uses `<fieldset>` directly, which carries the grouping semantics natively and needs no wrapper. This is a deliberate simplification, not an omission.
 
