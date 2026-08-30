@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toPresentValue, toProjectionView } from "../src/services/presentValue";
 import { calculateOptimal } from "../src/services/bitcoinRetirementOptimizedCalculator";
+import { CalculationResult } from "../src/models/CalculationResult";
 import { InputData } from "../src/models/InputData";
 
 const INPUT: InputData = {
@@ -46,6 +47,29 @@ describe("toProjectionView", () => {
 
     expect(last.annualBudget).toBeGreaterThan(last.annualBudgetReal);
     expect(last.savingsFiat).toBeGreaterThan(last.savingsFiatReal);
+  });
+
+  it("reports no real figures when there is no retirement to discount to", () => {
+    // retirementAge 0 is the calculators' "not found" sentinel, not an age.
+    // Discounting to it passes a negative yearsFromNow, and a negative exponent
+    // inflates instead of discounting: at age 30 and 5% these would come back as
+    // 100000 * 1.05^30 = ~432194, in fields labelled as today's money.
+    const unreachable: CalculationResult = {
+      startingBitcoinPrice: 79_350.17,
+      dataSet: [],
+      retirementAge: 0,
+      savingsBitcoin: 0,
+      savingsFiat: 100_000,
+      bitcoinPriceAtRetirementAge: 0,
+      annualRetirementBudget: 100_000,
+      optimized: true,
+      canRetire: false,
+    };
+
+    const view = toProjectionView(unreachable, INPUT);
+
+    expect(view.savingsFiatReal).toBe(0);
+    expect(view.annualBudgetReal).toBe(0);
   });
 
   it("emits one point per projected year and carries the retirement age", () => {

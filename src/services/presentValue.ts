@@ -17,6 +17,16 @@ export const toProjectionView = (result: CalculationResult, input: InputData): P
   const real = (nominal: number, age: number) =>
     toPresentValue(nominal, age - input.currentAge, input.inflationRate);
 
+  // A result that never reaches retirement reports `retirementAge: 0`, which is
+  // the calculators' "not found" sentinel rather than an age. Discounting to it
+  // would pass a negative `yearsFromNow`, and a negative exponent multiplies
+  // instead of dividing: at age 30 and 5% inflation the figure comes back 4.3x
+  // larger, in a field the UI presents as today's money. There is no retirement
+  // to discount to, so the answer is 0 — which is what the nominal figures
+  // beside it already hold in this case.
+  const realAtRetirement = (nominal: number) =>
+    result.canRetire ? real(nominal, result.retirementAge) : 0;
+
   const points: ProjectionPoint[] = result.dataSet.map((d) => ({
     key: d.key,
     year: d.year,
@@ -36,9 +46,9 @@ export const toProjectionView = (result: CalculationResult, input: InputData): P
     retirementAge: result.retirementAge,
     savingsBitcoin: result.savingsBitcoin,
     savingsFiat: result.savingsFiat,
-    savingsFiatReal: real(result.savingsFiat, result.retirementAge),
+    savingsFiatReal: realAtRetirement(result.savingsFiat),
     annualBudget: result.annualRetirementBudget,
-    annualBudgetReal: real(result.annualRetirementBudget, result.retirementAge),
+    annualBudgetReal: realAtRetirement(result.annualRetirementBudget),
     bitcoinPriceAtRetirementAge: result.bitcoinPriceAtRetirementAge,
     points,
   };
