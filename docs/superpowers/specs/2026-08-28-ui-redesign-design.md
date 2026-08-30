@@ -25,7 +25,8 @@ hand-duplicated in `[data-theme='dark']` blocks per file, and
 `html * { font-family: monospace !important }` overrides everything.
 
 Underneath, two theming systems disagree: antd 6's `ConfigProvider` algorithm
-and the manual SCSS overrides.
+and the manual SCSS overrides. The redesign removes the first of them outright —
+see *Styling* — and folds the second into tokens.
 
 ## Scope
 
@@ -43,6 +44,7 @@ behaviour. Not a product rethink — no onboarding, no presets, no new inputs.
 | Conservative chart | Its own form: a cash tank that fills at liquidation and drains |
 | Budget series | Not plotted — see below |
 | Layout | Both strategies side by side; the strategy switch disappears |
+| Component library | antd removed; shadcn/ui on Base UI, generated into the repo |
 
 ### Why the budget is not a chart series
 
@@ -145,45 +147,101 @@ New components:
 `Summary` and `OptimizedSummary` are deleted; they differ only in `toUsd` vs
 `toBtc` and both are superseded by `StrategyCard`.
 
-### Styling: Tailwind v4 alongside antd
+### Styling: Tailwind v4 + shadcn/ui, and antd is removed
 
-Tailwind v4 via `@tailwindcss/vite`, verified against this toolchain: the plugin
-declares `vite: ^5.2.0 || ^6 || ^7 || ^8` and we are on Vite 8.
+antd is replaced by shadcn/ui. An earlier draft of this section kept antd and put
+Tailwind alongside it; a spike proved that arrangement unworkable and the
+measurements below replaced it.
 
-Tailwind v4 is CSS-first — its `@theme` block *is* a set of CSS custom
-properties, and utilities are generated from them. That collapses two things the
-original draft kept apart: the token system and the utility system become one
-file.
+**Why the switch.** Three findings, each measured on this repository rather than
+assumed:
+
+- *Utilities were silently inert on antd components.* Adding `bg-black` to a live
+  `.ant-btn` left its computed background unchanged. antd 6 injects its runtime
+  CSS unlayered, and unlayered CSS beats every layered rule regardless of
+  specificity, so a `className` on an antd widget did nothing — with no error
+  anywhere. `<StyleProvider layer>` fixes it, but the whole redesign would then
+  rest on a cascade arrangement that fails silently the moment it regresses.
+- *The antd surface is eight import lines across eight files, in 1153 lines of
+  TSX,* and none of it uses the features that make antd hard to leave. The Table
+  runs `pagination={false}`, `bordered`, `scroll={{ y: 250 }}` — no sorting, no
+  filters, no virtualization. `InputNumber` uses `min`/`max`/`step`/`addonAfter`.
+- *antd is 665 KB of a 1290 KB bundle (51.9%); the application it dresses is
+  27 KB (2.1%).* Roughly 109 KB of that is `rc-tree`, `rc-select`, `rc-menu` and
+  `rc-form`, which this app never imports — antd's `Table` pulls them in
+  statically for the features it has disabled, so tree-shaking cannot remove
+  them. The equivalent shadcn stack measures 142 KB.
+
+The redesign rewrites this JSX regardless, so the marginal cost of the swap is
+near zero now and large at any later point.
+
+**What shadcn is here.** shadcn 4 generates components into `src/components/ui/`
+built on `@base-ui/react` — Base UI, not Radix. Base UI 1.7.0 declares
+`react: ^17 || ^18 || ^19`. The components are source in this repository, not a
+dependency: they are edited directly when the design needs something the default
+does not do.
+
+Components generated: `button`, `input`, `label`, `popover`, `separator`,
+`slider`, `switch`, `table`, `tabs`, `tooltip`. `QRCode` has no shadcn
+equivalent and moves to `qrcode.react`.
+
+`Table` is modified from its generated form to accept `containerClassName`. A
+sticky header resolves against its nearest scrollport, and shadcn's wrapper div
+is always one — `overflow-x: auto` forces `overflow-y` to compute to `auto` too —
+so the height cap has to land on that div. Capping an outer wrapper does nothing.
+
+**Preflight is imported.** This reverses the earlier draft, which skipped it
+solely to stop it fighting antd's base styles. shadcn is built on it. The
+consequence is that every surviving `.scss` file now styles against a reset that
+did not apply when it was written, so the old UI degrades until each component is
+migrated. That is expected interim breakage, not a defect.
+
+**Token ownership is explicit.** shadcn emits an `@theme inline` block after this
+app's `@theme`, so it wins any name they share. It owns `--color-background`,
+`--color-foreground`, `--color-primary`, `--color-secondary`, `--color-muted`,
+`--color-accent`, `--color-destructive`, `--color-border`, `--color-input`,
+`--color-ring`, `--color-card`, `--color-popover`, `--color-chart-*`,
+`--color-sidebar-*` and `--radius-*`.
+
+This app therefore owns only names shadcn does not use:
 
 ```
 src/styles/theme.css
   @theme {
-    --color-accent: #F6931A;
-    --color-surface: …;
-    --font-mono: …;
-    --spacing-*, --radius-*, --text-*
+    --color-bitcoin: #F6931A;        /* NOT --color-accent: shadcn owns that name */
+    --color-bitcoin-soft: #F6931A1F;
+    --color-surface, --color-surface-sunken
+    --color-ink, --color-ink-muted
+    --color-gain, --color-loss
+    --font-sans, --font-mono
   }
 ```
 
-The same custom properties are read back in TypeScript and passed to antd's
-`ConfigProvider` `theme.token`. One source of truth; the two theming systems stop
-disagreeing.
+Reusing a shadcn-owned name is a silent failure: the value is simply ignored and
+the component renders in shadcn's neutral palette without erroring. Any new token
+is checked against the list above.
 
-**Preflight is not imported.** Tailwind's base reset fights antd's own base
-styles, so we import `tailwindcss/theme` and `tailwindcss/utilities` and skip
-`tailwindcss/preflight`. The few resets we actually want are declared explicitly.
-
-Division of labour: Tailwind owns layout, spacing, typography and responsive
-behaviour. antd keeps the complex widgets — `Table`, `Slider`, `InputNumber`,
-`Popover`, `QRCode`, `Switch`, `Tabs`, `Spin` — themed through `ConfigProvider`.
-Component SCSS files are deleted as their rules move to utilities; `theme.css`
-and any genuinely component-scoped styles are all that remain.
+**Typography.** `--font-sans` is Geist Variable, self-hosted through
+`@fontsource-variable/geist`, so no external font request is made. `--font-mono`
+stays the system stack (`ui-monospace`, `SF Mono`, `JetBrains Mono`, `Menlo`) and
+costs zero bytes; a second webfont is weight this section just spent effort
+removing. Sans carries headings and prose, mono carries figures, prices and table
+cells, as decided above.
 
 `html * { font-family: monospace !important }` is deleted. Mono becomes a
-deliberate `font-mono` on figures, prices and table cells.
+deliberate `font-mono` where it belongs.
 
 Bootstrap 3's alert palette (`#3c763d`, `#31708f`, `#a94442`) goes. Bitcoin
 orange `#F6931A` stays as the single accent.
+
+**Dark mode is one switch.** shadcn generates its dark tokens under `.dark`;
+that block is retargeted to `:root[data-theme="dark"]`, the same attribute the
+`@custom-variant dark` and `useLocalStorage` already drive. Two token systems,
+one trigger.
+
+Division of labour: Tailwind owns layout, spacing, typography and responsive
+behaviour. shadcn owns widget behaviour and accessibility. Component SCSS files
+are deleted as their rules move to utilities; `theme.css` is all that remains.
 
 ### Responsive
 
@@ -204,8 +262,9 @@ per region:
 The page body never scrolls horizontally. The table is the only element allowed
 to, and it does so inside its own overflow container.
 
-Touch: `ScrubField`'s track needs a hit area of at least 44px on touch pointers,
-which antd's `Slider` does not give by default — it is enlarged with a
+Touch: `ScrubField`'s track needs a hit area of at least 44px on touch pointers.
+shadcn's generated `Slider` gives its thumb a `after:absolute after:-inset-2`
+pseudo-element, which is about 28px — not enough. The track is enlarged with a
 transparent padded wrapper rather than by growing the visible track.
 
 Dark mode continues to key off `[data-theme]` on the root, which `useLocalStorage`
@@ -297,14 +356,24 @@ plus tooltips is most of the build. If the schedule slips, the `cash` variant ca
 ship as the dual-axis chart that exists today, and only the `stack` variant is
 new.
 
-**Tailwind and antd have to coexist.** Skipping preflight is the known
-mitigation, but antd 6 renders through CSS-in-JS with generated class names, so
-a utility and a component style can still collide in ways that only show at
-runtime. The first task in the plan is a spike that puts Tailwind in front of the
-existing UI and confirms antd's `Table`, `Slider` and `Popover` still render
-correctly — before any redesign work depends on it. If they cannot be reconciled,
-the fallback is the SCSS-plus-tokens approach this section replaced, and only the
-styling mechanism changes; every design decision above survives.
+**~~Tailwind and antd have to coexist.~~** Resolved by removing antd. The spike
+this risk called for was run and reported that they could *not* be reconciled
+safely: utilities on antd components were inert, and the fix left the redesign
+resting on a cascade arrangement that fails silently. See *Styling* above.
+
+**The component library is now source in this repository.** shadcn components are
+copied in, not installed, so upstream fixes do not arrive automatically and local
+edits — `Table`'s `containerClassName`, the retargeted dark block — must be
+re-applied by hand if a component is ever regenerated. This is the trade the
+model makes deliberately; the mitigation is that each local edit carries a
+comment saying why it exists, so a regeneration diff shows what was lost.
+
+**Removing antd is a wide change with a narrow test net.** Eleven widgets across
+eight files go at once, and jsdom cannot tell whether the replacements *look*
+right. `build-smoke.spec.ts` proves the bundle still boots; everything visual is
+checked by hand in a browser, per the Testing section. The migration is therefore
+sequenced so the app compiles and renders at every step rather than being broken
+across several.
 
 **A new build plugin, one week after a build plugin took production down.**
 `@tailwindcss/vite` declares Vite 8 support and that was checked rather than
