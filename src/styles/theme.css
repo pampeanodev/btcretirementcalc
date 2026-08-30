@@ -1,0 +1,38 @@
+/* Preflight is deliberately omitted: it fights antd's own base styles. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* Dark mode keys off the [data-theme] attribute that useLocalStorage already
+   drives in App.tsx, not off prefers-color-scheme. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --color-accent: #f6931a;
+  --color-accent-soft: #f6931a1f;
+
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f5f5f5;
+  --color-border: #e3e3e3;
+  --color-ink: #1f2023;
+  --color-ink-muted: #63666b;
+
+  --color-gain: #2f9e6e;
+  --color-loss: #c0483f;
+
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root[data-theme="dark"] {
+  --color-surface: #2c2c2d;
+  --color-surface-sunken: #1f2023;
+  --color-border: #383739;
+  --color-ink: #dadada;
+  --color-ink-muted: #9a9ca1;
+}
+
+body {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
