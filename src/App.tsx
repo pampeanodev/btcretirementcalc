@@ -10,25 +10,28 @@ import useLocalStorage from "use-local-storage";
 function App() {
   const [t] = useTranslation();
   const defaultDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const [userTheme, setUserTheme] = useLocalStorage("theme", defaultDark ? "dark" : "light");
+  const [, setUserTheme] = useLocalStorage("theme", defaultDark ? "dark" : "light");
   const [useDarkMode, setUseDarkMode] = useState(defaultDark);
 
   const toggleDarkMode = (darkMode: boolean) => {
     setUseDarkMode(darkMode);
   };
   useLayoutEffect(() => {
+    // `data-theme` lives on <html>, not on a wrapper div: theme.css resolves its
+    // dark tokens against `:root[data-theme="dark"]`, and <body>'s own
+    // background cannot read a token declared on one of its descendants.
+    const nextTheme = useDarkMode ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", nextTheme);
     if (useDarkMode) {
       document.body.classList.add("dark");
-
-      setUserTheme("dark");
     } else {
       document.body.classList.remove("dark");
-      setUserTheme("light");
     }
+    setUserTheme(nextTheme);
   }, [setUserTheme, useDarkMode]);
 
   return (
-    <div data-theme={userTheme}>
+    <div>
       <ConfigProvider
         theme={{
           algorithm: useDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
