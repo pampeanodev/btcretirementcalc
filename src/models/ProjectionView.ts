@@ -1,0 +1,29 @@
+export interface ProjectionPoint {
+  key: number;
+  year: number;
+  age: number;
+  bitcoinPrice: number;
+  savingsBitcoin: number;
+  /** Nominal value of the stack that year. */
+  savingsFiat: number;
+  /** Same figure in the purchasing power of today. */
+  savingsFiatReal: number;
+  bitcoinFlow: number;
+  /** Nominal budget that year, indexed by inflation. */
+  annualBudget: number;
+  /** Same figure discounted back to today. */
+  annualBudgetReal: number;
+}
+
+export interface ProjectionView {
+  optimized: boolean;
+  canRetire: boolean;
+  retirementAge: number;
+  savingsBitcoin: number;
+  savingsFiat: number;
+  savingsFiatReal: number;
+  annualBudget: number;
+  annualBudgetReal: number;
+  bitcoinPriceAtRetirementAge: number;
+  points: ProjectionPoint[];
+}
