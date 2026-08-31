@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 
@@ -29,8 +31,16 @@ const ScrubField = ({
   unit,
   onChange,
 }: ScrubFieldProps) => {
+  // Mid-edit the field shows what the user typed, so it can be momentarily
+  // empty or "-" without the parent ever receiving NaN. Outside an edit it
+  // shows the canonical value, so a slider drag is reflected immediately.
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? String(value);
+
+  // `isFinite`, not `!isNaN`: Infinity is not NaN and must not reach the parent
+  // either.
   const emit = (next: number) => {
-    if (Number.isNaN(next)) {
+    if (!Number.isFinite(next)) {
       return;
     }
     onChange(next);
@@ -48,11 +58,17 @@ const ScrubField = ({
             name={name}
             type="number"
             className="w-28 border-0 bg-transparent p-0 text-right font-mono shadow-none focus-visible:ring-0"
-            value={value}
+            value={shown}
             min={min}
             max={max}
             step={step}
-            onChange={(e) => emit(e.target.valueAsNumber)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              emit(e.target.valueAsNumber);
+            }}
+            // Dropping the draft on blur resyncs with the value the parent
+            // actually holds, so a field left empty does not stay empty.
+            onBlur={() => setDraft(null)}
           />
           {unit && <span className="text-xs text-ink-muted">{unit}</span>}
         </div>
@@ -67,7 +83,12 @@ const ScrubField = ({
           min={min}
           max={max}
           step={step}
-          onValueChange={(next) => emit(Array.isArray(next) ? next[0] : next)}
+          onValueChange={(next) => {
+            // Clearing the draft too, or a drag would leave a stale string in
+            // the box.
+            setDraft(null);
+            emit(Array.isArray(next) ? next[0] : next);
+          }}
         />
       </div>
       <div className="flex justify-between font-mono text-[10px] text-ink-muted">

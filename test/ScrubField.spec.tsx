@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ScrubField from "../src/components/common/ScrubField";
 
@@ -35,19 +35,72 @@ describe("ScrubField", () => {
     );
 
     const field = screen.getByRole("spinbutton", { name: "Growth" });
+    await user.clear(field);
+    await user.type(field, "35");
 
-    // A keystroke appends to the controlled value: this parent never feeds the
-    // new number back, so React keeps restoring "20" between keys.
-    await user.type(field, "5");
-    expect(onChange).toHaveBeenLastCalledWith(205);
+    expect(onChange).toHaveBeenCalled();
+    expect(onChange.mock.calls[onChange.mock.calls.length - 1][0]).toBe(35);
+  });
 
-    // A whole figure typed over the field arrives as a number, not a string.
-    // fireEvent rather than user.clear(): an emptied number input reads as NaN,
-    // which ScrubField refuses to emit, so React restores the controlled value
-    // and later keystrokes append to it. A number input also exposes no
-    // selection API, so select-all-and-replace is not available either.
-    fireEvent.change(field, { target: { value: "35" } });
-    expect(onChange).toHaveBeenLastCalledWith(35);
+  it("can be emptied mid-edit without reporting a non-number", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <ScrubField
+        label="Growth"
+        name="growthRate"
+        value={20}
+        min={0}
+        max={100}
+        onChange={onChange}
+      />,
+    );
+
+    const field = screen.getByRole("spinbutton", { name: "Growth" });
+    await user.clear(field);
+
+    // Without the draft the field would snap back to 20 here and the next
+    // keystrokes would append to it.
+    expect(field).toHaveValue(null);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onChange.mock.calls.every(([reported]) => Number.isFinite(reported))).toBe(true);
+
+    // Leaving the field resyncs it with the value the parent still holds.
+    await user.tab();
+    expect(field).toHaveValue(20);
+  });
+
+  it("clears a stale draft when the slider moves", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <ScrubField
+        label="Growth"
+        name="growthRate"
+        value={20}
+        min={0}
+        max={100}
+        onChange={onChange}
+      />,
+    );
+
+    const field = screen.getByRole("spinbutton", { name: "Growth" });
+    const slider = screen.getByRole("slider", { hidden: true });
+
+    await user.clear(field);
+    await user.type(field, "9");
+    expect(field).toHaveValue(9);
+
+    // Keyboard rather than a pointer drag: jsdom has no layout, so Base UI
+    // cannot resolve a pointer position into a value, but the range input's
+    // own arrow keys move it.
+    slider.focus();
+    await user.keyboard("{ArrowRight}");
+
+    expect(onChange).toHaveBeenLastCalledWith(21);
+    // The box must not go on showing the stale "9". This parent holds value at
+    // 20, so it resyncs to that.
+    expect(field).toHaveValue(20);
   });
 
   it("gives the slider the same accessible name and bounds", () => {
