@@ -180,6 +180,12 @@ body {
 
 :root[data-theme="dark"] {
   --border: #383739;
+  /* Kept identical to --border. shadcn's dark default is a translucent
+     oklch(1 0 0 / 15%), and button.tsx reaches for `dark:border-input` on its
+     outline variant — so leaving it behind made an outline button and a
+     StatTile draw two different borders side by side. --sidebar-border is
+     deliberately untouched; nothing here renders a sidebar. */
+  --input: #383739;
   --color-surface: #2c2c2d;
   --color-surface-sunken: #1f2023;
   --color-ink: #dadada;
