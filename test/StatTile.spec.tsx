@@ -16,6 +16,22 @@ describe("StatTile", () => {
     expect(screen.getByText("$1,327,495 in 2079")).toBeInTheDocument();
   });
 
+  it("renders no nominal line when the value was never converted", () => {
+    const { container } = render(<StatTile label="Retirement age" value="43" />);
+
+    // A component that rendered the nominal span unconditionally would pass
+    // every other test in this file. An unexplained second line under a figure
+    // nobody converted is the disclosure rule running backwards: it tells the
+    // reader a transform happened when none did.
+    expect(container.querySelectorAll("span")).toHaveLength(2);
+  });
+
+  it("sizes the hero figure larger than a normal one", () => {
+    render(<StatTile label="Annual budget" value="$100,000" size="hero" />);
+
+    expect(screen.getByText("$100,000")).toHaveClass("text-4xl");
+  });
+
   it("renders figures in the monospace face", () => {
     render(<StatTile label="Stack" value="₿1.845" />);
 
