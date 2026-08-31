@@ -22,8 +22,15 @@ export interface ProjectionView {
   savingsBitcoin: number;
   savingsFiat: number;
   savingsFiatReal: number;
+  /**
+   * The budget at the retirement age, nominal. Sourced from
+   * `annualRetirementBudgetAtRetirementAge`, which means the same thing on both
+   * strategies — see the note in `presentValue.ts`.
+   */
   annualBudget: number;
+  /** Same figure discounted back to today. Round-trips to the user's input. */
   annualBudgetReal: number;
+  startingBitcoinPrice: number;
   bitcoinPriceAtRetirementAge: number;
   points: ProjectionPoint[];
 }

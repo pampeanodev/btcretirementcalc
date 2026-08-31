@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toPresentValue, toProjectionView } from "../src/services/presentValue";
+import { calculate } from "../src/services/bitcoinRetirementCalculator";
 import { calculateOptimal } from "../src/services/bitcoinRetirementOptimizedCalculator";
 import { CalculationResult } from "../src/models/CalculationResult";
 import { InputData } from "../src/models/InputData";
@@ -14,6 +15,8 @@ const INPUT: InputData = {
   optimized: true,
   inflationRate: 5,
 };
+
+const CONSERVATIVE_INPUT: InputData = { ...INPUT, optimized: false };
 
 describe("toPresentValue", () => {
   it("discounts by compounding inflation", () => {
@@ -39,6 +42,35 @@ describe("toProjectionView", () => {
     for (const point of view.points) {
       expect(point.annualBudgetReal).toBeCloseTo(INPUT.desiredRetirementAnnualBudget, 4);
     }
+  });
+
+  // The two calculators fill `annualRetirementBudget` with different things —
+  // the conservative one puts a flat stack/years figure there, the optimized one
+  // a genuine retirement-year budget. These three tests state the budget
+  // property for BOTH paths, because a suite that only ever calls
+  // calculateOptimal cannot see that divergence at all.
+  it("returns the desired budget unchanged on the optimized path", () => {
+    const view = toProjectionView(calculateOptimal(INPUT, 79_350.17), INPUT);
+
+    expect(view.annualBudgetReal).toBeCloseTo(INPUT.desiredRetirementAnnualBudget, 4);
+  });
+
+  it("returns the desired budget unchanged on the conservative path", () => {
+    const view = toProjectionView(calculate(CONSERVATIVE_INPUT, 79_350.17), CONSERVATIVE_INPUT);
+
+    expect(view.annualBudgetReal).toBeCloseTo(CONSERVATIVE_INPUT.desiredRetirementAnnualBudget, 4);
+  });
+
+  it("agrees with its own rows about the budget at the retirement age", () => {
+    // The headline figure and the row for the same year are both labelled
+    // today's money, so a reader comparing them must not find two numbers.
+    const view = toProjectionView(calculate(CONSERVATIVE_INPUT, 79_350.17), CONSERVATIVE_INPUT);
+    const atRetirement = view.points.find((point) => point.age === view.retirementAge);
+
+    if (!atRetirement) {
+      throw new Error("expected a projected row at the retirement age");
+    }
+    expect(view.annualBudgetReal).toBeCloseTo(atRetirement.annualBudgetReal, 4);
   });
 
   it("keeps the nominal figures alongside the real ones", () => {
