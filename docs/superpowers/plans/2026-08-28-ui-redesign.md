@@ -22,7 +22,7 @@
 - No `import ... from "antd"` in any file this plan leaves behind.
 - Every converted (today's-dollars) figure on screen must expose its nominal counterpart. This is asserted, not reviewed.
 - The page body never scrolls horizontally. Only the table may, inside its own container.
-- Prettier config is authoritative: double quotes, semicolons, 2-space indent, print width 100, trailing commas.
+- Prettier config is authoritative: double quotes, semicolons, 2-space indent, print width 100, trailing commas. `shadcn add` writes in its own style and leaves the files it generates failing `prettier --check` — run `node_modules/.bin/prettier --write` over anything it created before committing.
 - Commit after every task. Branch: `feat/ui-redesign` off `main`.
 
 ---
@@ -931,7 +931,39 @@ describe("StrategyComparison", () => {
 
     expect(onSelect).toHaveBeenCalledWith("conservative");
   });
+
+  it("discloses the nominal figure beside the converted one", () => {
+    const { conservative, optimized } = views();
+    render(
+      <StrategyComparison
+        conservative={conservative}
+        optimized={optimized}
+        selected="optimized"
+        onSelect={() => {}}
+      />,
+    );
+
+    const last = optimized.points[optimized.points.length - 1];
+
+    // Guards the guard. If these two ever coincide, the assertions below would
+    // pass without any conversion having happened, and the test would be
+    // proving nothing.
+    expect(Math.round(last.savingsFiatReal)).not.toBe(Math.round(last.savingsFiat));
+
+    // The spec's disclosure rule: a discounted figure never appears without the
+    // future amount it came from. Asserted here, on a real projection, because
+    // StatTile's own tests only prove the tile CAN carry a nominal — not that a
+    // converted figure ever actually gets one.
+    expect(screen.getAllByText(toUsd(last.savingsFiatReal)).length).toBeGreaterThan(0);
+    expect(screen.getByText(`${toUsd(last.savingsFiat)} in ${last.year}`)).toBeInTheDocument();
+  });
 });
+```
+
+Add `toUsd` to the imports at the top of the file:
+
+```tsx
+import { toUsd } from "../src/constants";
 ```
 
 - [ ] **Step 2: Run it to confirm it fails**
