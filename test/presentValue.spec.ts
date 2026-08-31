@@ -81,6 +81,27 @@ describe("toProjectionView", () => {
     expect(last.savingsFiat).toBeGreaterThan(last.savingsFiatReal);
   });
 
+  it("pairs the top-level nominal budget with its own real figure", () => {
+    // Until this existed, only the per-point pairing above was asserted and the
+    // top-level nominal was checked nowhere. The two top-level fields are one
+    // quantity in two units, written from the same expression on adjacent
+    // lines, so reverting either alone would put a nominal 817,818 beside a
+    // real 100,000 in the same tile with the whole suite green.
+    //
+    // Asserting the round trip pins them to each other rather than merely to
+    // the right order of magnitude.
+    const view = toProjectionView(calculate(CONSERVATIVE_INPUT, 79_350.17), CONSERVATIVE_INPUT);
+
+    expect(view.annualBudget).toBeGreaterThan(view.annualBudgetReal);
+    expect(
+      toPresentValue(
+        view.annualBudget,
+        view.retirementAge - CONSERVATIVE_INPUT.currentAge,
+        CONSERVATIVE_INPUT.inflationRate,
+      ),
+    ).toBeCloseTo(view.annualBudgetReal, 4);
+  });
+
   it("reports no real figures when there is no retirement to discount to", () => {
     // retirementAge 0 is the calculators' "not found" sentinel, not an age.
     // Discounting to it passes a negative yearsFromNow, and a negative exponent
