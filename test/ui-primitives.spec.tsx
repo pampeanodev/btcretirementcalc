@@ -45,9 +45,7 @@ describe("shadcn primitives", () => {
     // against its nearest scrollport, which is this wrapper div, so the height
     // cap has to reach it. Regenerating table.tsx would drop the prop and the
     // header would stop sticking with nothing else failing.
-    const { container } = render(
-      <Table containerClassName="max-h-[250px]" className="w-full" />,
-    );
+    const { container } = render(<Table containerClassName="max-h-[250px]" className="w-full" />);
 
     const wrapper = container.querySelector('[data-slot="table-container"]');
     expect(wrapper).toHaveClass("max-h-[250px]");
