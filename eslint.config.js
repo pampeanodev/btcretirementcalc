@@ -31,4 +31,19 @@ export default defineConfig([
       "react-refresh/only-export-components": "off",
     },
   },
+  {
+    // ProjectionChart exports `buildSeries` beside the component deliberately.
+    // chart.js draws to a canvas, and under jsdom it gives up before reading
+    // its own configuration, so calling the mapping directly is the only way to
+    // assert what the chart is told to plot. The rule is narrowed to that one
+    // name rather than switched off: anything else exported from here still
+    // reports, and the cost is one chart remounting on edit during development.
+    files: ["src/components/Results/ProjectionChart.tsx"],
+    rules: {
+      "react-refresh/only-export-components": [
+        "error",
+        { allowConstantExport: true, allowExportNames: ["buildSeries"] },
+      ],
+    },
+  },
 ]);
