@@ -699,7 +699,6 @@ import { Line } from "react-chartjs-2";
 import "chart.js/auto";
 import { ProjectionView } from "../../models/ProjectionView";
 import { toUsd } from "../../constants";
-import { palette } from "../../styles/tokens";
 
 export type ChartVariant = "cash" | "stack";
 export type ChartUnit = "btc" | "fiat";
@@ -757,7 +756,15 @@ interface ProjectionChartProps {
 
 const ProjectionChart = ({ view, variant, unit = "btc", height = 260 }: ProjectionChartProps) => {
   const series = buildSeries(view, variant, unit);
-  const fills = [palette.light.accent, "#2f9e6e"];
+  // Colours are read from the live custom properties on the document element,
+  // not from a TS palette. An earlier draft imported `palette` from
+  // `src/styles/tokens.ts`, which the antd removal deleted along with Task 2 —
+  // and its second series was the literal `#2f9e6e`, which the global
+  // constraint against literal colours forbids anyway. Resolving at runtime
+  // also means the chart follows a theme switch without a second source of
+  // truth. The spec asserts this by declaring deliberately wrong hexes in the
+  // test, so a hard-coded palette fails.
+  const fills = [token("--color-bitcoin"), token("--color-gain")];
   // cash genuinely plots two units, so it keeps a second axis. stack shows one
   // unit at a time, which is how its scale problem disappears rather than
   // being managed.
