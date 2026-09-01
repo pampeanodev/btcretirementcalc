@@ -279,7 +279,39 @@ areas, dual axes and custom tooltips. No new charting dependency.
 
 The dual-axis configuration added while fixing #53 stays available for the
 `cash` variant, which genuinely plots two units. The `stack` variant plots one
-unit at a time, so its scale problem disappears rather than being managed.
+unit at a time, which disposes of the *cross-unit* half of the scale problem.
+
+**Dollar axes are logarithmic; bitcoin axes stay linear.** Plotting one unit at
+a time does nothing about the second half of the problem — that fifty years of
+compounding bury the accumulation phase. Measured against the real calculators
+on the optimized strategy, the fiat series spans 102,686 to 7,143,130: the start
+sits at 1.44% of the maximum and the retirement year at 10.23%, so twelve years
+of accumulation occupy the bottom tenth of a linear axis. That is the exact
+complaint this redesign exists to answer, and discounting to today's dollars
+does not touch it — inflation is removed, the growth rate is not.
+
+The bitcoin series has no such problem (0.076 to 1.845, starting at 61% of its
+maximum) and stays linear.
+
+Two consequences follow, and both are requirements rather than details:
+
+- **A logarithmic axis cannot plot zero or a negative.** The "sold each year"
+  and "withdrawn" series are structurally zero for the whole accumulation phase,
+  and a drained conservative pot can reach zero at the end of life. Those points
+  become `null`, not `0`. This is more honest as well as necessary: before
+  retirement there is no withdrawal, and a zero draws a line along the axis
+  asserting that the withdrawal *was* zero.
+- **A log axis must say so.** Distances on it are not proportional to
+  differences, and a reader who misses that misreads the chart badly. The axis
+  is labelled, and it carries the "Today's dollars" title required below.
+
+### Every dollar axis says whose dollars they are
+
+The tooltip discloses the nominal figure beside the converted one, but a tooltip
+is hover-only. Axis ticks are converted figures shown with no counterpart, so a
+dollar axis carries the title `Today's dollars`. Without it a reader taking in
+the chart statically has no way to know the figures are inflation-adjusted,
+while the same reader looking at a `StatTile` gets the nominal inline.
 
 ## Sliders: merged, not removed
 
