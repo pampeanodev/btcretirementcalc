@@ -2075,7 +2075,18 @@ export default App;
 
 `document.body.classList` no longer carries `dark` — nothing reads it once `App.scss` is gone.
 
-Add `"app.theme-toggle"` to every locale file under `src/locales/`. **The English value must be exactly `Dark mode`** — Task 13 queries the switch by that accessible name. A missing key renders the key itself, which is visible in the UI but would fail that test rather than this one, so add it here.
+Add `"app.theme-toggle"` to all three locale files — `en.json`, `es.json`, `pt.json`.
+
+**Write it as a flat key, exactly like every existing one.** These files use literal dotted key names, not nested objects:
+
+```json
+"app.title": "Bitcoin Retirement Calculator",
+"app.theme-toggle": "Dark mode",
+```
+
+Nesting it as `{ "app": { "theme-toggle": … } }` does not resolve against this setup, and the failure is confusing — the UI renders the key string itself and the Task 13 test reports a missing element rather than a missing translation.
+
+**The English value must be exactly `Dark mode`**, because Task 13 queries the switch by that accessible name. Translate `es.json` and `pt.json` properly rather than copying the English across: only `en.json` is load-bearing for the test, and the other two are what a Spanish or Portuguese reader actually hears from a screen reader.
 
 - [ ] **Step 5: Port the last stylesheet and delete the rest**
 
