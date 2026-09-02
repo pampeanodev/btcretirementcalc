@@ -36,8 +36,10 @@ export default defineConfig([
     // chart.js draws to a canvas, and under jsdom it gives up before reading
     // its own configuration, so calling the mapping directly is the only way to
     // assert what the chart is told to plot. The rule is narrowed to that one
-    // name rather than switched off: anything else exported from here still
-    // reports, and the cost is one chart remounting on edit during development.
+    // name rather than switched off, so another exported component or hook here
+    // still reports — an exported constant does not, because the inherited
+    // `allowConstantExport` already permits those everywhere. The cost is one
+    // chart remounting on edit during development.
     files: ["src/components/Results/ProjectionChart.tsx"],
     rules: {
       "react-refresh/only-export-components": [

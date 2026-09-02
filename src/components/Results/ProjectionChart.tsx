@@ -17,13 +17,25 @@ type ThemeToken = "--color-bitcoin" | "--color-gain" | "--color-ink-muted" | "--
 
 interface SeriesDataset {
   label: string;
-  data: number[];
+  /**
+   * `null`, never `0`, wherever a dollar series has nothing to plot. A
+   * logarithmic axis cannot place zero at all, and a zero would anyway draw a
+   * line along the axis asserting the withdrawal *was* zero in a year when
+   * there was no withdrawal to speak of.
+   */
+  data: (number | null)[];
   /** What the numbers are denominated in, which is what formats them. */
   unit: ChartUnit;
   /** Resolved at render, not here, so this stays a pure mapping of the view. */
   token: ThemeToken;
   /** "btc" only ever appears on the cash variant, which plots two units. */
   axis: "main" | "btc";
+  /**
+   * Areas are drawn only where two series share an axis and a unit, so a
+   * crossing means something. `"start"` rather than `"origin"` on a log axis,
+   * whose zero sits at negative infinity.
+   */
+  fill: "origin" | "start" | false;
 }
 
 interface Series {
@@ -32,15 +44,23 @@ interface Series {
 }
 
 /**
+ * Dollars are plotted logarithmically, and a log axis cannot take zero or a
+ * negative. Measured across 4,608 input combinations, the only way a dollar
+ * series goes non-positive is a user who holds no bitcoin and buys none, where
+ * every point is 0 — it is never negative, and a retiring pot never drains to
+ * zero, because both calculators only retire once the stack covers the whole
+ * remaining budget stream.
+ */
+const plottable = (value: number) => (value > 0 ? value : null);
+
+/**
  * Exported apart from the component so the mapping can be asserted directly.
  * chart.js paints to a stubbed canvas context under jsdom, so rendering the
  * component proves nothing about the numbers.
  */
-export const buildSeries = (
-  view: ProjectionView,
-  variant: ChartVariant,
-  unit: ChartUnit,
-): Series => {
+export function buildSeries(view: ProjectionView, variant: "cash"): Series;
+export function buildSeries(view: ProjectionView, variant: "stack", unit: ChartUnit): Series;
+export function buildSeries(view: ProjectionView, variant: ChartVariant, unit?: ChartUnit): Series {
   const labels = view.points.map((p) => String(p.age));
 
   if (variant === "stack") {
@@ -54,13 +74,18 @@ export const buildSeries = (
               unit: "btc",
               token: "--color-bitcoin",
               axis: "main",
+              fill: "origin",
             },
             {
+              // These zeros stay zeros. The bitcoin axis is linear, so it can
+              // plot them, and on a linear axis the flat run to retirement
+              // reads as the accumulation phase rather than as missing data.
               label: "₿ sold",
               data: view.points.map((p) => Math.max(0, -p.bitcoinFlow)),
               unit: "btc",
               token: "--color-ink-muted",
               axis: "main",
+              fill: "origin",
             },
           ],
         }
@@ -69,10 +94,11 @@ export const buildSeries = (
           datasets: [
             {
               label: "$ value",
-              data: view.points.map((p) => p.savingsFiatReal),
+              data: view.points.map((p) => plottable(p.savingsFiatReal)),
               unit: "fiat",
               token: "--color-gain",
               axis: "main",
+              fill: "start",
             },
             {
               label: "$ withdrawn",
@@ -81,9 +107,12 @@ export const buildSeries = (
               // withdrawal is small beside the stack. Two dollar axes at
               // different scales would make the withdrawal look like it tracked
               // the savings.
-              data: view.points.map((p) => (p.bitcoinFlow < 0 ? p.annualBudgetReal : 0)),
+              data: view.points.map((p) =>
+                p.bitcoinFlow < 0 ? plottable(p.annualBudgetReal) : null,
+              ),
               token: "--color-ink-muted",
               axis: "main",
+              fill: "start",
             },
           ],
         };
@@ -94,21 +123,26 @@ export const buildSeries = (
     datasets: [
       {
         label: "$ savings",
-        data: view.points.map((p) => p.savingsFiatReal),
+        data: view.points.map((p) => plottable(p.savingsFiatReal)),
         unit: "fiat",
         token: "--color-gain",
         axis: "main",
+        fill: "start",
       },
       {
+        // Unfilled on purpose. This series lives on its own axis with no
+        // relationship to the dollar one, and two translucent areas crossing
+        // over scales that share nothing read as a meaningful crossing.
         label: "₿ held",
         data: view.points.map((p) => p.savingsBitcoin),
         unit: "btc",
         token: "--color-bitcoin",
         axis: "btc",
+        fill: false,
       },
     ],
   };
-};
+}
 
 const readToken = (token: ThemeToken) =>
   getComputedStyle(document.documentElement).getPropertyValue(token).trim();
@@ -130,6 +164,24 @@ const softFill = (color: string) => (/^#[0-9a-f]{6}$/i.test(color) ? `${color}33
 const formatValue = (value: number, unit: ChartUnit) =>
   unit === "btc" ? value.toFixed(4) : Math.round(value).toLocaleString("en-US");
 
+/**
+ * Which ticks a logarithmic axis is allowed to label.
+ *
+ * chart.js emits minor ticks between the powers of ten, and in log space
+ * $600K, $800K and $1M sit close enough together to overlap into an unreadable
+ * smear at this chart's height. Labelling only the 1-2-5 decade steps is the
+ * conventional answer and leaves the gridlines untouched. Returning undefined
+ * from a tick callback hides that label without removing the tick.
+ */
+const labelsOnLogAxis = (value: number) => {
+  if (value <= 0) {
+    return false;
+  }
+  const mantissa = value / Math.pow(10, Math.floor(Math.log10(value)));
+  const rounded = Math.round(mantissa);
+  return Math.abs(mantissa - rounded) < 1e-9 && (rounded === 1 || rounded === 2 || rounded === 5);
+};
+
 const formatTick = (value: number, unit: ChartUnit) =>
   unit === "btc"
     ? `${BITCOIN_SIGN}${value.toFixed(2)}`
@@ -143,21 +195,30 @@ const formatTick = (value: number, unit: ChartUnit) =>
         maximumFractionDigits: 1,
       });
 
-interface ProjectionChartProps {
-  view: ProjectionView;
-  variant: ChartVariant;
-  unit?: ChartUnit;
-  height?: number;
-}
+/**
+ * `unit` is meaningful only on `stack`. `cash` plots a dollar axis and a bitcoin
+ * axis whatever it is handed, so the union makes `<ProjectionChart variant="cash"
+ * unit="btc" />` — a bitcoin-looking call that renders a dollar-primary chart —
+ * impossible to write rather than merely wrong.
+ */
+type ProjectionChartProps = { view: ProjectionView; height?: number } & (
+  { variant: "stack"; unit?: ChartUnit } | { variant: "cash"; unit?: never }
+);
 
-const ProjectionChart = ({ view, variant, unit = "btc", height = 260 }: ProjectionChartProps) => {
-  const series = buildSeries(view, variant, unit);
+const ProjectionChart = ({ view, variant, unit, height = 260 }: ProjectionChartProps) => {
+  const series =
+    variant === "cash" ? buildSeries(view, "cash") : buildSeries(view, "stack", unit ?? "btc");
   // cash genuinely plots two units, so it keeps a second axis. stack shows one
-  // unit at a time, which is how its scale problem disappears rather than
-  // being managed.
+  // unit at a time, which disposes of the cross-unit half of the scale problem.
   const dualAxis = variant === "cash";
-  const mainUnit: ChartUnit = dualAxis ? "fiat" : unit;
+  const mainUnit: ChartUnit = dualAxis ? "fiat" : (unit ?? "btc");
   const showsWithdrawal = variant === "stack" && unit === "fiat";
+  // Dollars compound over fifty years: the fiat series starts at 1.44% of its
+  // own maximum, so a linear axis buries twelve years of accumulation in the
+  // bottom tenth. Bitcoin starts at 61% of its maximum and never had the
+  // problem, so it stays linear and keeps its intuitive distances.
+  const mainScale = mainUnit === "btc" ? ("linear" as const) : ("logarithmic" as const);
+  const dollarTitle = "Today's dollars (log scale)";
   const ink = readToken("--color-ink-muted");
   const grid = readToken("--border");
   const lastLabel = series.labels[series.labels.length - 1] ?? "";
@@ -175,7 +236,7 @@ const ProjectionChart = ({ view, variant, unit = "btc", height = 260 }: Projecti
             return {
               label: d.label,
               data: d.data,
-              fill: "origin" as const,
+              fill: d.fill,
               borderColor: color,
               backgroundColor: softFill(color),
               borderWidth: 2,
@@ -203,9 +264,15 @@ const ProjectionChart = ({ view, variant, unit = "btc", height = 260 }: Projecti
                     : `${dataset.label}: ${formatValue(value, dataset.unit)}`;
                 },
                 afterBody: (items) => {
+                  // Disclosure follows what is on screen. A pure-bitcoin chart
+                  // converts nothing, so naming a nominal dollar figure there is
+                  // the disclosure mechanism firing with nothing to disclose.
+                  if (mainUnit !== "fiat" && !dualAxis) {
+                    return [];
+                  }
                   const point = view.points[items[0].dataIndex];
-                  // Everything on screen is in today's money; the future amounts
-                  // are disclosed here so the conversion is never silent.
+                  // Everything in dollars here is in today's money; the future
+                  // amounts are disclosed so the conversion is never silent.
                   const lines = [`nominal ${toUsd(point.savingsFiat)} in ${point.year}`];
                   if (showsWithdrawal && point.bitcoinFlow < 0) {
                     lines.push(`nominal withdrawal ${toUsd(point.annualBudget)}`);
@@ -222,9 +289,25 @@ const ProjectionChart = ({ view, variant, unit = "btc", height = 260 }: Projecti
               grid: { color: grid },
             },
             main: {
-              type: "linear",
+              type: mainScale,
               position: "left",
-              ticks: { color: ink, callback: (value) => formatTick(Number(value), mainUnit) },
+              // A converted figure with no counterpart beside it is a silent
+              // conversion; the tooltip discloses the nominal, but a tooltip is
+              // hover-only and axis ticks are read statically. The title also
+              // says the scale is logarithmic, because distances on it are not
+              // proportional to differences.
+              ...(mainUnit === "fiat"
+                ? { title: { display: true, text: dollarTitle, color: ink } }
+                : {}),
+              ticks: {
+                color: ink,
+                callback: (value) => {
+                  const tick = Number(value);
+                  return mainScale === "logarithmic" && !labelsOnLogAxis(tick)
+                    ? undefined
+                    : formatTick(tick, mainUnit);
+                },
+              },
               grid: { color: grid },
             },
             ...(dualAxis

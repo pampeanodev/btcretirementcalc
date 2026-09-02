@@ -40,12 +40,14 @@ const StrategyCard = ({ view, title, caption, selected, onSelect }: StrategyCard
         />
       </div>
 
-      <ProjectionChart
-        view={view}
-        variant={view.optimized ? "stack" : "cash"}
-        unit={view.optimized ? "btc" : "fiat"}
-        height={120}
-      />
+      {/* Written as two calls rather than one with ternary props: `unit` only
+          means anything on `stack`, and the props type no longer allows it to
+          be passed alongside `cash`. */}
+      {view.optimized ? (
+        <ProjectionChart view={view} variant="stack" unit="btc" height={120} />
+      ) : (
+        <ProjectionChart view={view} variant="cash" height={120} />
+      )}
     </button>
   );
 };

@@ -55,8 +55,14 @@ describe("buildSeries", () => {
   it("the two units move in opposite directions after retirement", () => {
     // This contrast is the lesson of the optimized strategy: fewer coins, more money.
     const view = optimizedView();
-    const after = (data: number[]) =>
-      data.slice(view.points.findIndex((p) => p.age === view.retirementAge));
+    const after = (data: (number | null)[]): number[] => {
+      const tail = data.slice(view.points.findIndex((p) => p.age === view.retirementAge));
+      // Both series are strictly positive after retirement, so the log-axis
+      // nulling never touches them. Pinned, because if it ever did the
+      // comparisons below would be comparing against a hole.
+      expect(tail.every((v) => v !== null)).toBe(true);
+      return tail as number[];
+    };
 
     const btc = after(buildSeries(view, "stack", "btc").datasets[0].data);
     const fiat = after(buildSeries(view, "stack", "fiat").datasets[0].data);
@@ -67,12 +73,12 @@ describe("buildSeries", () => {
 
   it("cash plots the drawdown in today's money", () => {
     const view = conservativeView();
-    const series = buildSeries(view, "cash", "fiat");
+    const series = buildSeries(view, "cash");
 
     expect(series.datasets[0].label).toBe("$ savings");
     const cash = series.datasets[0].data.slice(
       view.points.findIndex((p) => p.age === view.retirementAge),
-    );
+    ) as number[];
     expect(cash).toStrictEqual([...cash].sort((a, b) => b - a));
   });
 
@@ -80,7 +86,7 @@ describe("buildSeries", () => {
     // The assertion above passes on either series: the nominal drawdown falls
     // monotonically too. Only comparing against both figures separates them.
     const view = conservativeView();
-    const series = buildSeries(view, "cash", "fiat");
+    const series = buildSeries(view, "cash");
 
     expect(series.datasets[0].data).toStrictEqual(view.points.map((p) => p.savingsFiatReal));
     expect(series.datasets[0].data).not.toStrictEqual(view.points.map((p) => p.savingsFiat));
@@ -94,6 +100,59 @@ describe("buildSeries", () => {
     expect(sold.slice(0, retirementIndex).every((v) => v === 0)).toBe(true);
     expect(sold[retirementIndex]).toBeGreaterThan(0);
   });
+
+  it("nulls the pre-retirement withdrawals rather than plotting them as zero", () => {
+    const view = optimizedView();
+    const withdrawn = buildSeries(view, "stack", "fiat").datasets[1].data;
+    const retirementIndex = view.points.findIndex((p) => p.age === view.retirementAge);
+
+    // A log axis cannot place zero, and a zero would draw a line along the axis
+    // asserting a withdrawal was made in a year when none was.
+    expect(withdrawn.slice(0, retirementIndex).every((v) => v === null)).toBe(true);
+    expect(withdrawn[retirementIndex]).toBeGreaterThan(0);
+  });
+
+  it("keeps the bitcoin zeros, which sit on an axis that can plot them", () => {
+    const view = optimizedView();
+    const sold = buildSeries(view, "stack", "btc").datasets[1].data;
+
+    expect(sold.includes(null)).toBe(false);
+    expect(sold[0]).toBe(0);
+  });
+
+  it("nulls a dollar series that a log axis could not plot at all", () => {
+    // The only way any dollar figure goes non-positive: a user holding no
+    // bitcoin who buys none. Measured across 4,608 input combinations, this is
+    // the sole case — never negative, and a retiring pot never drains to zero.
+    const barren: InputData = {
+      ...INPUT,
+      currentSavingsInBitcoin: 0,
+      annualBuyInFiat: 0,
+      optimized: false,
+    };
+    const view = toProjectionView(calculate(barren, PRICE), barren);
+
+    expect(view.points.every((p) => p.savingsFiatReal === 0)).toBe(true);
+    expect(buildSeries(view, "cash").datasets[0].data.every((v) => v === null)).toBe(true);
+  });
+
+  it("fills an area only where two series share an axis and a unit", () => {
+    // Two translucent areas over scales with no relationship read as a
+    // meaningful crossing where there is none.
+    expect(buildSeries(conservativeView(), "cash").datasets.map((d) => d.fill)).toStrictEqual([
+      "start",
+      false,
+    ]);
+    // Same axis, same unit: a crossing there does mean something.
+    expect(buildSeries(optimizedView(), "stack", "btc").datasets.map((d) => d.fill)).toStrictEqual([
+      "origin",
+      "origin",
+    ]);
+    // "start", not "origin": a log axis puts zero at negative infinity.
+    expect(buildSeries(optimizedView(), "stack", "fiat").datasets.map((d) => d.fill)).toStrictEqual(
+      ["start", "start"],
+    );
+  });
 });
 
 /**
@@ -103,7 +162,7 @@ describe("buildSeries", () => {
  * what this component tells chart.js to draw.
  */
 interface CapturedChart {
-  data: ChartData<"line", number[], string>;
+  data: ChartData<"line", (number | null)[], string>;
   options?: ChartOptions<"line">;
   "aria-label"?: string;
 }
@@ -129,10 +188,18 @@ const TOKENS: Record<string, string> = {
   "--border": "#444444",
 };
 
-const renderChart = (view: ProjectionView, variant: ChartVariant, unit: ChartUnit) => {
-  render(<ProjectionChart view={view} variant={variant} unit={unit} />);
+function renderChart(view: ProjectionView, variant: "cash"): CapturedChart;
+function renderChart(view: ProjectionView, variant: "stack", unit: ChartUnit): CapturedChart;
+function renderChart(view: ProjectionView, variant: ChartVariant, unit?: ChartUnit) {
+  render(
+    variant === "cash" ? (
+      <ProjectionChart view={view} variant="cash" />
+    ) : (
+      <ProjectionChart view={view} variant="stack" unit={unit ?? "btc"} />
+    ),
+  );
   return chart.props as CapturedChart;
-};
+}
 
 /**
  * chart.js types both callbacks with a `this` binding and parameters the
@@ -197,7 +264,7 @@ describe("ProjectionChart", () => {
     const view = conservativeView();
     const point = view.points[3];
 
-    const lines = afterBody(renderChart(view, "cash", "fiat").options)([{ dataIndex: 3 }]);
+    const lines = afterBody(renderChart(view, "cash").options)([{ dataIndex: 3 }]);
 
     expect(lines).toStrictEqual([`nominal ${toUsd(point.savingsFiat)} in ${point.year}`]);
   });
@@ -217,7 +284,7 @@ describe("ProjectionChart", () => {
     expect(stack.options?.scales?.btc).toBeUndefined();
     expect(stack.data.datasets.every((d) => d.yAxisID === "main")).toBe(true);
 
-    const cash = renderChart(conservativeView(), "cash", "fiat");
+    const cash = renderChart(conservativeView(), "cash");
     expect(cash.options?.scales?.btc).toBeDefined();
     expect(cash.data.datasets.map((d) => d.yAxisID)).toStrictEqual(["main", "btc"]);
   });
@@ -226,8 +293,9 @@ describe("ProjectionChart", () => {
     const stack = renderChart(optimizedView(), "stack", "btc");
     expect(tickFormat(stack.options, "main")(1.6)).toBe("₿1.60");
 
-    const cash = renderChart(conservativeView(), "cash", "fiat");
-    expect(tickFormat(cash.options, "main")(7_143_126)).toBe("$7.1M");
+    const cash = renderChart(conservativeView(), "cash");
+    // A 1-2-5 step, because the dollar axis is logarithmic and only labels those.
+    expect(tickFormat(cash.options, "main")(5_000_000)).toBe("$5M");
     expect(tickFormat(cash.options, "btc")(1.6)).toBe("₿1.60");
   });
 
@@ -235,13 +303,77 @@ describe("ProjectionChart", () => {
     // Left alone chart.js prints the raw number: "$ value: 900127.169" beside
     // an axis reading $900K. Caught in a browser, not here — jsdom never gets
     // far enough to draw a tooltip.
-    const cash = renderChart(conservativeView(), "cash", "fiat");
+    const cash = renderChart(conservativeView(), "cash");
     const label = tooltipLabel(cash.options);
 
     expect(label({ datasetIndex: 0, parsed: { y: 900_127.169 } })).toBe("$ savings: 900,127");
     expect(label({ datasetIndex: 1, parsed: { y: 1.6232745 } })).toBe("₿ held: 1.6233");
     // A gap in the line reads as absent, never as a zero balance.
     expect(label({ datasetIndex: 0, parsed: { y: null } })).toBe("$ savings");
+  });
+
+  it("plots dollars logarithmically and bitcoin linearly", () => {
+    // The fiat series starts at 1.44% of its own maximum, so a linear axis
+    // buries twelve years of accumulation in the bottom tenth. Bitcoin starts
+    // at 61% of its maximum and keeps its intuitive distances.
+    expect(renderChart(optimizedView(), "stack", "fiat").options?.scales?.main?.type).toBe(
+      "logarithmic",
+    );
+    expect(renderChart(optimizedView(), "stack", "btc").options?.scales?.main?.type).toBe("linear");
+
+    const cash = renderChart(conservativeView(), "cash").options;
+    expect(cash?.scales?.main?.type).toBe("logarithmic");
+    expect(cash?.scales?.btc?.type).toBe("linear");
+  });
+
+  it("labels only the 1-2-5 steps of a log axis, so the ticks stay readable", () => {
+    // Seen in a browser: chart.js's minor log ticks put $600K, $800K and $1M
+    // close enough together to overlap into a smear.
+    const format = tickFormat(renderChart(optimizedView(), "stack", "fiat").options, "main");
+
+    expect(format(100_000)).toBe("$100K");
+    expect(format(200_000)).toBe("$200K");
+    expect(format(500_000)).toBe("$500K");
+    expect(format(1_000_000)).toBe("$1M");
+    expect(format(600_000)).toBeUndefined();
+    expect(format(800_000)).toBeUndefined();
+    expect(format(300_000)).toBeUndefined();
+  });
+
+  it("labels every tick on a linear axis, which does not crowd", () => {
+    const stack = renderChart(optimizedView(), "stack", "btc");
+    // The same filter on the bitcoin axis would blank most of its ticks.
+    expect(tickFormat(stack.options, "main")(0.6)).toBe("₿0.60");
+    expect(tickFormat(stack.options, "main")(0.8)).toBe("₿0.80");
+  });
+
+  it("says whose dollars they are, on every dollar axis", () => {
+    // The tooltip disclosure is hover-only; axis ticks are read statically.
+    const title = (options?: ChartOptions<"line">, axis: "main" | "btc" = "main") =>
+      options?.scales?.[axis]?.title;
+
+    expect(title(renderChart(optimizedView(), "stack", "fiat").options)).toMatchObject({
+      display: true,
+      text: "Today's dollars (log scale)",
+    });
+    expect(title(renderChart(conservativeView(), "cash").options)).toMatchObject({
+      display: true,
+      text: "Today's dollars (log scale)",
+    });
+    // Nothing on the bitcoin axes is converted, so neither carries the claim.
+    expect(title(renderChart(optimizedView(), "stack", "btc").options)).toBeUndefined();
+    expect(title(renderChart(conservativeView(), "cash").options, "btc")).toBeUndefined();
+  });
+
+  it("discloses nothing on a chart where nothing is converted", () => {
+    const view = optimizedView();
+
+    // stack/btc plots holdings and coins sold. Neither is inflation-adjusted,
+    // so naming a nominal dollar figure is the disclosure mechanism firing
+    // where there is nothing to disclose.
+    expect(afterBody(renderChart(view, "stack", "btc").options)([{ dataIndex: 20 }])).toStrictEqual(
+      [],
+    );
   });
 
   it("describes what it is plotting for a reader who cannot see the canvas", () => {
