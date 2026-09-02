@@ -27,11 +27,11 @@ body.dark {
   font-weight: 500;
   gap: 0.3rem;
 }
-[data-theme='dark'] {
-  .signature>a {
+[data-theme="dark"] {
+  .signature > a {
     color: lightskyblue;
   }
 }
-.donate-input{
+.donate-input {
   max-width: 10rem;
 }

@@ -3,8 +3,8 @@
   padding: 0.5rem 0.5rem;
   font-size: medium;
   @media (max-width: 700px) {
-      display: flex;
-      flex-direction: column;
+    display: flex;
+    flex-direction: column;
   }
 
   :last-child {
@@ -24,7 +24,7 @@
     color: #a94442;
   }
 }
-[data-theme='dark'] {
+[data-theme="dark"] {
   .infobox.infobox-success {
     color: #d8fed8;
   }
