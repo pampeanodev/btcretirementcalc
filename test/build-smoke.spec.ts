@@ -48,5 +48,9 @@ describe("production bundle", () => {
       .toBeGreaterThan(0);
 
     expect(document.getElementById("root")?.textContent).toContain("Bitcoin Retirement Calculator");
-  });
+    // 15s, not vitest's default 5s: the poll above is allowed 10s on its own, so
+    // without this the test can expire before its own poll gives up — and this
+    // is the one test that executes the real production bundle, so a flake here
+    // gets blamed on whatever change happened to be in flight.
+  }, 15_000);
 });
