@@ -275,10 +275,14 @@ describe("ProjectionChart", () => {
 
   it("names no withdrawal in a year where nothing was withdrawn", () => {
     const view = optimizedView();
+    const point = view.points[0];
 
     const lines = afterBody(renderChart(view, "stack", "fiat").options)([{ dataIndex: 0 }]);
 
-    expect(lines).toHaveLength(1);
+    // Asserting the exact line rather than the count: `toHaveLength(1)` passes
+    // for any single line, including a wrong one, so it would not notice the
+    // withdrawal text being swapped in for the stack text.
+    expect(lines).toStrictEqual([`nominal ${toUsd(point.savingsFiat)} in ${point.year}`]);
   });
 
   it("gives the stack a single axis and the cash view a second one", () => {

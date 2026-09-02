@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import StrategyComparison from "../src/components/Results/StrategyComparison";
 import { toProjectionView } from "../src/services/presentValue";
@@ -108,7 +108,14 @@ describe("StrategyComparison", () => {
     // future amount it came from. Asserted here, on a real projection, because
     // StatTile's own tests only prove the tile CAN carry a nominal — not that a
     // converted figure ever actually gets one.
-    expect(screen.getAllByText(toUsd(last.savingsFiatReal)).length).toBeGreaterThan(0);
-    expect(screen.getByText(`${toUsd(last.savingsFiat)} in ${last.year}`)).toBeInTheDocument();
+    //
+    // Scoped to the tile, not the page. The rule is that the two sit together
+    // where one reader sees both; asserting each exists somewhere would pass
+    // with the converted figure on one card and its nominal on the other.
+    const nominal = screen.getByText(`${toUsd(last.savingsFiat)} in ${last.year}`);
+    const tile = nominal.closest('[data-slot="stat-tile"]');
+
+    expect(tile).not.toBeNull();
+    expect(within(tile as HTMLElement).getByText(toUsd(last.savingsFiatReal))).toBeInTheDocument();
   });
 });
