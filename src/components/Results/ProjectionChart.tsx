@@ -81,7 +81,12 @@ export function buildSeries(view: ProjectionView, variant: ChartVariant, unit?: 
               // plot them, and on a linear axis the flat run to retirement
               // reads as the accumulation phase rather than as missing data.
               label: "₿ sold",
-              data: view.points.map((p) => Math.max(0, -p.bitcoinFlow)),
+              // Null, not zero, even though this axis is linear and could plot a
+              // zero: before retirement no sale happens, and a zero draws a line
+              // along the axis asserting that a sale of nothing was made. Same
+              // reasoning as the withdrawal series — the log axis forced it there
+              // and honesty asks for it here.
+              data: view.points.map((p) => plottable(-p.bitcoinFlow)),
               unit: "btc",
               token: "--color-ink-muted",
               axis: "main",

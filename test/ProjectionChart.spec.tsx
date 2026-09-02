@@ -97,7 +97,7 @@ describe("buildSeries", () => {
     const sold = buildSeries(view, "stack", "btc").datasets[1].data;
     const retirementIndex = view.points.findIndex((p) => p.age === view.retirementAge);
 
-    expect(sold.slice(0, retirementIndex).every((v) => v === 0)).toBe(true);
+    expect(sold.slice(0, retirementIndex).every((v) => v === null)).toBe(true);
     expect(sold[retirementIndex]).toBeGreaterThan(0);
   });
 
@@ -112,12 +112,16 @@ describe("buildSeries", () => {
     expect(withdrawn[retirementIndex]).toBeGreaterThan(0);
   });
 
-  it("keeps the bitcoin zeros, which sit on an axis that can plot them", () => {
+  it("nulls the bitcoin sales too, though this axis could plot a zero", () => {
+    // The linear bitcoin axis has no technical objection to a zero. This is the
+    // honesty rule rather than the log-axis rule: a zero is a plotted claim that
+    // a sale of nothing took place, which is a different statement from no sale
+    // having happened at all. Both series now say the same thing the same way.
     const view = optimizedView();
     const sold = buildSeries(view, "stack", "btc").datasets[1].data;
 
-    expect(sold.includes(null)).toBe(false);
-    expect(sold[0]).toBe(0);
+    expect(sold[0]).toBeNull();
+    expect(sold.some((v) => typeof v === "number" && v > 0)).toBe(true);
   });
 
   it("nulls a dollar series that a log axis could not plot at all", () => {
