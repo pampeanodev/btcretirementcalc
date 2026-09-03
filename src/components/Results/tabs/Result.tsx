@@ -4,7 +4,7 @@ import ChartTab from "./ChartTab";
 import { LineChartProps } from "../../../models/LineChartProps";
 import { useTranslation } from "react-i18next";
 import TableTab from "./TableTab";
-import { AnnualTrackingData } from "../../../models/CalculationResult";
+import { ProjectionView } from "../../../models/ProjectionView";
 import Summary from "./Summary";
 import OptimizedSummary from "./OptimizedSummary";
 import CannotRetire from "./CannotRetire";
@@ -15,9 +15,8 @@ type Props = {
   annualBudget: number;
   bitcoinPriceAtRetirement: number;
   savingsBitcoin: number;
-  savingsFiat: number;
   chartData: LineChartProps;
-  tableData: AnnualTrackingData[];
+  view: ProjectionView;
   optimized: boolean;
   canRetire: boolean;
 };
@@ -28,9 +27,8 @@ const Result = ({
   annualBudget,
   bitcoinPriceAtRetirement,
   savingsBitcoin,
-  savingsFiat,
   chartData,
-  tableData,
+  view,
   optimized,
   canRetire,
 }: Props) => {
@@ -56,19 +54,7 @@ const Result = ({
       key: "2",
       label: t("calculator.table-view"),
       icon: <TableOutlined />,
-      children: (
-        <TableTab
-          startingBitcoinPrice={btcPrice!}
-          retirementAge={retirementAge}
-          annualRetirementBudget={annualBudget}
-          bitcoinPriceAtRetirementAge={bitcoinPriceAtRetirement}
-          savingsFiat={savingsFiat}
-          dataSet={tableData!}
-          savingsBitcoin={savingsBitcoin}
-          optimized={optimized}
-          canRetire={canRetire}
-        />
-      ),
+      children: <TableTab view={view} />,
     },
   ];
   if (!canRetire) {

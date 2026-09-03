@@ -6,20 +6,24 @@ import InputPanel from "./Input/InputPanel";
 import { InputData } from "../models/InputData";
 import { Spin } from "antd";
 import { LineChartProps, LineChartData } from "../models/LineChartProps";
-import { AnnualTrackingData, CalculationResult } from "../models/CalculationResult";
+import { CalculationResult } from "../models/CalculationResult";
+import { ProjectionView } from "../models/ProjectionView";
 import { calculateOptimal } from "../services/bitcoinRetirementOptimizedCalculator";
 import { calculate } from "../services/bitcoinRetirementCalculator";
+import { toProjectionView } from "../services/presentValue";
 import { BITCOIN_COLOR } from "../constants";
 import Result from "./Results/tabs/Result";
 
 const Calculator = () => {
   const [savingsBitcoin, setSavingsBitcoin] = useState<number>(0);
-  const [savingsFiat, setSavingsFiat] = useState<number>(0);
   const [retirementAge, setRetirementAge] = useState<number>(0);
   const [annualBudget, setAnnualBudget] = useState<number>(0);
   const [bitcoinPriceAtRetirement, setBitcoinPriceAtRetirement] = useState<number>(0);
   const [chartData, setChartData] = useState<LineChartProps>();
-  const [tableData, setTableData] = useState<AnnualTrackingData[]>([]);
+  // The table needs the discounted figures beside the nominal ones, and only
+  // this component holds both halves the conversion needs — the result and the
+  // InputData that produced it — so the view is built here and passed down.
+  const [view, setView] = useState<ProjectionView>();
   const [optimized, setOptimized] = useState<boolean>(false);
   const [canRetire, setCanRetire] = useState<boolean>(false);
 
@@ -67,14 +71,13 @@ const Calculator = () => {
       : calculate(data, btcPrice!);
 
     setRetirementAge(calculationResult.retirementAge);
-    setSavingsFiat(calculationResult.savingsFiat);
     setSavingsBitcoin(calculationResult.savingsBitcoin);
     setBitcoinPriceAtRetirement(calculationResult.bitcoinPriceAtRetirementAge);
     setAnnualBudget(calculationResult.annualRetirementBudget);
     setOptimized(data.optimized);
     setCanRetire(calculationResult.canRetire);
 
-    setTableData(calculationResult.dataSet);
+    setView(toProjectionView(calculationResult, data));
 
     updateChartWithAfterRetirementData(calculationResult, data);
   };
@@ -102,16 +105,15 @@ const Calculator = () => {
             clearChart={clearChart}
           ></InputPanel>
           <div className="calculator__result">
-            {chartData && tableData && (
+            {chartData && view && (
               <Result
                 btcPrice={btcPrice}
                 retirementAge={retirementAge}
                 annualBudget={annualBudget}
                 bitcoinPriceAtRetirement={bitcoinPriceAtRetirement}
                 savingsBitcoin={savingsBitcoin}
-                savingsFiat={savingsFiat}
                 chartData={chartData}
-                tableData={tableData}
+                view={view}
                 optimized={optimized}
                 canRetire={canRetire}
               />
