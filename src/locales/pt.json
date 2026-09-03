@@ -32,13 +32,14 @@
   "summary.monthly-retirement-budget": "Renda Mensal ao Aposentar:",
   "summary.retirement-age": "Idade de aposentadoria:",
   "summary.total-savings": "Poupança Total:",
-  "table.accumulated-savings": "$ Poupados",
   "table.accumulated-savings-btc": "₿ Poupados",
   "table.age": "Age",
   "table.bitcoin-price": "Preço do ₿",
   "table.config.title": "Colunas a Mostrar",
   "table.indexed-budget": "Renda Anual",
   "table.not-relevant": "Não relevante",
+  "table.savings-nominal": "Poupança (nominal)",
+  "table.savings-today": "Poupança (hoje)",
   "table.year": "Ano",
   "table.you-bought": "₿ fluxos"
 }

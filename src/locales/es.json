@@ -32,13 +32,14 @@
   "summary.monthly-retirement-budget": "Presupuesto mensual al retiro:",
   "summary.retirement-age": "Edad de retiro:",
   "summary.total-savings": "Ahorros totales:",
-  "table.accumulated-savings": "Ahorros $",
   "table.accumulated-savings-btc": "Ahorros ₿",
   "table.age": "Edad",
   "table.bitcoin-price": "Precio ₿",
   "table.config.title": "Columnas a mostrar",
   "table.indexed-budget": "Presupuesto anual",
   "table.not-relevant": "Irrelevante",
+  "table.savings-nominal": "Ahorros (nominal)",
+  "table.savings-today": "Ahorros (hoy)",
   "table.year": "Año",
   "table.you-bought": "flujos ₿"
 }
