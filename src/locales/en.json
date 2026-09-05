@@ -42,5 +42,8 @@
   "table.savings-today": "Savings (today)",
   "table.year": "Year",
   "table.you-bought": "₿ flows",
-  "table.savings-pair": "Savings (today + nominal)"
+  "table.savings-pair": "Savings (today + nominal)",
+  "chart.unit-group": "Chart unit",
+  "chart.unit-btc": "₿ bitcoin",
+  "chart.unit-fiat": "$ US dollars"
 }

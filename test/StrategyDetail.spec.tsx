@@ -80,15 +80,15 @@ describe("StrategyDetail", () => {
     const user = userEvent.setup();
     render(<StrategyDetail view={optimizedView()} />);
 
-    const btc = screen.getByRole("button", { name: BITCOIN_SIGN });
-    const fiat = screen.getByRole("button", { name: "$" });
+    const btc = screen.getByRole("button", { name: `${BITCOIN_SIGN} bitcoin` });
+    const fiat = screen.getByRole("button", { name: "$ US dollars" });
 
     // One labelled group, not two loose buttons: a reader who cannot see them
     // side by side is otherwise given no reason to think the second button has
     // anything to do with the first.
     const group = screen.getByRole("group", { name: "Chart unit" });
-    expect(within(group).getByRole("button", { name: BITCOIN_SIGN })).toBe(btc);
-    expect(within(group).getByRole("button", { name: "$" })).toBe(fiat);
+    expect(within(group).getByRole("button", { name: `${BITCOIN_SIGN} bitcoin` })).toBe(btc);
+    expect(within(group).getByRole("button", { name: "$ US dollars" })).toBe(fiat);
 
     // The starting state is asserted too, and so is the button that was NOT
     // clicked. Checking only that the clicked button ends up pressed passes on
@@ -120,8 +120,10 @@ describe("StrategyDetail", () => {
     // swap.
     render(<StrategyDetail view={conservativeView()} />);
 
-    expect(screen.queryByRole("button", { name: "$" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: BITCOIN_SIGN })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "$ US dollars" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: `${BITCOIN_SIGN} bitcoin` }),
+    ).not.toBeInTheDocument();
     // Absence on its own is satisfied by a panel that rendered nothing at all.
     // The cash chart being there is what makes the missing toggle the right
     // answer rather than a hole.
@@ -135,18 +137,21 @@ describe("StrategyDetail", () => {
     // unit to give it.
     const user = userEvent.setup();
     const { rerender } = render(<StrategyDetail view={optimizedView()} />);
-    await user.click(screen.getByRole("button", { name: "$" }));
+    await user.click(screen.getByRole("button", { name: "$ US dollars" }));
 
     rerender(<StrategyDetail view={conservativeView()} />);
 
-    expect(screen.queryByRole("button", { name: "$" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "$ US dollars" })).not.toBeInTheDocument();
     expect(chart()).toHaveAccessibleName(/plotting \$ savings and ₿ held\.$/);
 
     rerender(<StrategyDetail view={optimizedView()} />);
 
     // The unit is the reader's choice, not the view's, so it survives the trip
     // through a strategy that had no toggle to show it.
-    expect(screen.getByRole("button", { name: "$" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "$ US dollars" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     expect(chart()).toHaveAccessibleName(/plotting \$ value and \$ withdrawn\.$/);
   });
 
@@ -184,7 +189,7 @@ describe("StrategyDetail", () => {
     const { container } = render(<StrategyDetail view={view} />);
 
     expect(chart()).toHaveAccessibleName(/plotting ₿ held and ₿ sold\.$/);
-    await user.click(screen.getByRole("button", { name: "$" }));
+    await user.click(screen.getByRole("button", { name: "$ US dollars" }));
     expect(chart()).toHaveAccessibleName(/plotting \$ value and \$ withdrawn\.$/);
 
     expect(

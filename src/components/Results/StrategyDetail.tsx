@@ -1,12 +1,13 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ProjectionView } from "../../models/ProjectionView";
 import { BITCOIN_SIGN } from "../../constants";
 import ProjectionChart, { ChartUnit } from "./ProjectionChart";
 import TableTab from "./tabs/TableTab";
 
-const UNITS: { unit: ChartUnit; symbol: string }[] = [
-  { unit: "btc", symbol: BITCOIN_SIGN },
-  { unit: "fiat", symbol: "$" },
+const UNITS: { unit: ChartUnit; symbol: string; nameKey: string }[] = [
+  { unit: "btc", symbol: BITCOIN_SIGN, nameKey: "chart.unit-btc" },
+  { unit: "fiat", symbol: "$", nameKey: "chart.unit-fiat" },
 ];
 
 /**
@@ -16,6 +17,7 @@ const UNITS: { unit: ChartUnit; symbol: string }[] = [
 const StrategyDetail = ({ view }: { view: ProjectionView }) => {
   // The unit is the reader's choice, not the view's, so it survives a change of
   // strategy rather than resetting under them.
+  const [t] = useTranslation();
   const [unit, setUnit] = useState<ChartUnit>("btc");
 
   return (
@@ -24,11 +26,16 @@ const StrategyDetail = ({ view }: { view: ProjectionView }) => {
           chart plots dollars and bitcoin at once, so there is nothing to
           choose, and a control that changed nothing would be worse than none. */}
       {view.optimized && (
-        <div className="flex gap-2" role="group" aria-label="Chart unit">
-          {UNITS.map(({ unit: u, symbol }) => (
+        <div className="flex gap-2" role="group" aria-label={t("chart.unit-group")}>
+          {UNITS.map(({ unit: u, symbol, nameKey }) => (
             <button
               key={u}
               type="button"
+              // The glyph alone is the visible label, and some screen readers
+              // announce \u20bf as nothing at all — a silent button. The name
+              // keeps the glyph, so it still contains the visible text, and adds
+              // the word so there is something to say.
+              aria-label={t(nameKey)}
               aria-pressed={unit === u}
               onClick={() => setUnit(u)}
               // The pressed state borrows StrategyCard's selected treatment —
