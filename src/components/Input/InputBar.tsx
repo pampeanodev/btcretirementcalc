@@ -7,13 +7,15 @@ import ScrubField from "../common/ScrubField";
 
 const num = (params: URLSearchParams, key: string, fallback: number) => {
   const raw = params.get(key);
-  const parsed = raw === null ? NaN : Number(raw);
+  // Blank counts as absent. `Number("")` and `Number(" ")` are 0, not NaN, so a
+  // link ending `?currentAge=` would otherwise read as a real zero and put a
+  // newborn through the projection instead of falling back to the default.
+  const parsed = raw === null || raw.trim() === "" ? NaN : Number(raw);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
 interface NumberFieldProps {
   label: string;
-  ariaLabel: string;
   value: number;
   min: number;
   max?: number;
@@ -33,8 +35,13 @@ interface NumberFieldProps {
  * after the change event. The box cannot be emptied, and the next keystrokes
  * append to the old number — clearing "0.5" and typing "0.25" leaves 0.5025,
  * measured, not supposed. Holding what was typed until blur is what stops that.
+ *
+ * The box is named by the `<label>` wrapping it, so its accessible name is the
+ * translated text on screen. It carries no `aria-label`: one would override that
+ * name with a string that never translates, leaving a pt or es reader with a
+ * name that has nothing to do with what they can see.
  */
-const NumberField = ({ label, ariaLabel, value, min, max, step, onChange }: NumberFieldProps) => {
+const NumberField = ({ label, value, min, max, step, onChange }: NumberFieldProps) => {
   const [draft, setDraft] = useState<string | null>(null);
 
   return (
@@ -42,7 +49,6 @@ const NumberField = ({ label, ariaLabel, value, min, max, step, onChange }: Numb
       {label}
       <Input
         type="number"
-        aria-label={ariaLabel}
         className="w-28 text-right font-mono"
         min={min}
         max={max}
@@ -108,10 +114,11 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-xs uppercase tracking-wide text-ink-muted">About you</legend>
+        <legend className="text-xs uppercase tracking-wide text-ink-muted">
+          {t("input.group-you")}
+        </legend>
         <NumberField
           label={t("input.current-age")}
-          ariaLabel="Current age"
           min={0}
           max={120}
           value={currentAge}
@@ -119,7 +126,6 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
         />
         <NumberField
           label={t("input.life-expectancy")}
-          ariaLabel="Life expectancy"
           min={1}
           max={130}
           value={lifeExpectancy}
@@ -128,17 +134,18 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
       </fieldset>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-xs uppercase tracking-wide text-ink-muted">Your bitcoin</legend>
+        <legend className="text-xs uppercase tracking-wide text-ink-muted">
+          {t("input.group-bitcoin")}
+        </legend>
         <NumberField
           label={t("input.savings-btc")}
-          ariaLabel="Bitcoin held"
           min={0}
           step={0.01}
           value={currentSavings}
           onChange={(v) => set("currentSavings", v)}
         />
         <ScrubField
-          label="Annual buy"
+          label={t("input.annual-buy")}
           name="annualBuy"
           value={annualBuy}
           min={0}
@@ -151,10 +158,10 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
 
       <fieldset className="flex flex-col gap-2">
         <legend className="text-xs uppercase tracking-wide text-ink-muted">
-          Assumptions and goal
+          {t("input.group-assumptions")}
         </legend>
         <ScrubField
-          label="Price annual growth"
+          label={t("input.growth-rate")}
           name="bitcoinCagr"
           value={bitcoinCagr}
           min={0}
@@ -163,7 +170,7 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
           onChange={(v) => set("bitcoinCagr", v)}
         />
         <ScrubField
-          label="Annual inflation"
+          label={t("input.inflation-rate")}
           name="inflationRate"
           value={inflationRate}
           min={0}
@@ -173,7 +180,7 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
           onChange={(v) => set("inflationRate", v)}
         />
         <ScrubField
-          label="Desired annual income"
+          label={t("input.desired-total-savings")}
           name="desiredRetirementIncome"
           value={desiredRetirementIncome}
           min={0}

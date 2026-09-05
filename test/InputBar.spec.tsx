@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import i18next from "i18next";
 import { useLocation } from "react-router-dom";
 import { initI18n, renderWithRouter } from "./test-utils";
 import InputBar from "../src/components/Input/InputBar";
@@ -8,6 +9,23 @@ import InputBar from "../src/components/Input/InputBar";
 beforeAll(async () => {
   await initI18n();
 });
+
+/**
+ * Every control is queried by the accessible name a screen reader would announce,
+ * which for all seven is the translated visible label — measured, not assumed:
+ * the wrapping `<label>` names the plain boxes ("Current age:", the colon
+ * included, and not the box's own value), and ScrubField's htmlFor/id pairing
+ * names the four scrub controls. Hardcoding an English name anywhere, in an
+ * `aria-label` or in ScrubField's `label` prop, breaks these queries — which is
+ * the point of writing them this way.
+ */
+const CURRENT_AGE = "Current age:";
+const LIFE_EXPECTANCY = "Life expectancy:";
+const BITCOIN_HELD = "Amount of ₿itcoin you hodl:";
+const ANNUAL_BUY = "Annual estimated buy:";
+const GROWTH_RATE = "Price annual growth:";
+const INFLATION_RATE = "Annual inflation:";
+const DESIRED_INCOME = "Desired annual retirement income:";
 
 /**
  * The query string is the shared-link contract, so a few tests below assert what
@@ -36,7 +54,7 @@ describe("InputBar", () => {
     renderWithRouter(<InputBar onCalculate={onCalculate} />);
     await waitFor(() => expect(onCalculate).toHaveBeenCalled());
 
-    const field = screen.getByRole("spinbutton", { name: "Current age" });
+    const field = screen.getByRole("spinbutton", { name: CURRENT_AGE });
     await user.clear(field);
     await user.type(field, "40");
 
@@ -92,6 +110,77 @@ describe("InputBar", () => {
     expect(onCalculate.mock.calls[0][0]).toMatchObject({ currentAge: 30, annualPriceGrowth: 20 });
   });
 
+  it("falls back to the default when a parameter is present but blank", async () => {
+    const onCalculate = vi.fn();
+    renderWithRouter(<InputBar onCalculate={onCalculate} />, [
+      "/?currentAge=&inflationRate=%20",
+    ]);
+
+    await waitFor(() => expect(onCalculate).toHaveBeenCalled());
+    // Blank is the case a plain `Number()` gets wrong rather than loudly: it
+    // reads "" and " " as 0, so a truncated link would quietly project a
+    // newborn with zero inflation instead of using the defaults.
+    expect(onCalculate.mock.calls[0][0]).toMatchObject({ currentAge: 30, inflationRate: 2 });
+  });
+
+  it("puts each control in the group its legend names", async () => {
+    const onCalculate = vi.fn();
+    renderWithRouter(<InputBar onCalculate={onCalculate} />);
+    await waitFor(() => expect(onCalculate).toHaveBeenCalled());
+
+    // The grouping is the task: seven controls in a flat list read as seven
+    // unrelated ones. A `<fieldset>` exposes role group named by its `<legend>`,
+    // so containment is assertable without touching a class or the DOM shape.
+    const grouped = (legend: string, control: string) =>
+      expect(screen.getByRole("group", { name: legend })).toContainElement(
+        screen.getByRole("spinbutton", { name: control }),
+      );
+
+    grouped("About you", CURRENT_AGE);
+    grouped("About you", LIFE_EXPECTANCY);
+    grouped("Your bitcoin", BITCOIN_HELD);
+    grouped("Your bitcoin", ANNUAL_BUY);
+    grouped("Assumptions and goal", GROWTH_RATE);
+    grouped("Assumptions and goal", INFLATION_RATE);
+    grouped("Assumptions and goal", DESIRED_INCOME);
+  });
+
+  it("renders its labels and legends in the reader's language", async () => {
+    const onCalculate = vi.fn();
+    renderWithRouter(<InputBar onCalculate={onCalculate} />);
+    await waitFor(() => expect(onCalculate).toHaveBeenCalled());
+
+    await act(async () => {
+      await i18next.changeLanguage("pt");
+    });
+    try {
+      // ScrubField names its input from the `label` prop it is given, so a
+      // hardcoded English label there is not a name/visible mismatch — it is a
+      // control that never translates at all, in any locale, for every reader.
+      expect(screen.getByRole("spinbutton", { name: "Compra Anual estimada:" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Idade atual:" })).toHaveValue(30);
+      expect(screen.getByRole("group", { name: "Sobre você" })).toContainElement(
+        screen.getByRole("spinbutton", { name: "Idade atual:" }),
+      );
+      expect(screen.getByRole("group", { name: "Seu bitcoin" })).toContainElement(
+        screen.getByRole("spinbutton", { name: "Compra Anual estimada:" }),
+      );
+      expect(screen.getByRole("group", { name: "Premissas e objetivo" })).toContainElement(
+        screen.getByRole("spinbutton", { name: "Taxa de inflação anual:" }),
+      );
+
+      // Nothing English is left behind: a control keeping its English name would
+      // mean a label that ignores the language rather than one that translates.
+      expect(screen.queryByRole("spinbutton", { name: CURRENT_AGE })).toBeNull();
+      expect(screen.queryByRole("spinbutton", { name: ANNUAL_BUY })).toBeNull();
+      expect(screen.queryByRole("group", { name: "About you" })).toBeNull();
+    } finally {
+      await act(async () => {
+        await i18next.changeLanguage("en");
+      });
+    }
+  });
+
   it("writes each control back to its own parameter", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
@@ -108,24 +197,19 @@ describe("InputBar", () => {
     // alone goes quiet until some other control is touched — and a single
     // assertion after the last edit would see every value in place regardless.
     const fields = [
-      { name: "Current age", typed: "41", param: "currentAge", emitted: "currentAge" },
-      { name: "Life expectancy", typed: "90", param: "lifeExpectancy", emitted: "lifeExpectancy" },
+      { name: CURRENT_AGE, typed: "41", param: "currentAge", emitted: "currentAge" },
+      { name: LIFE_EXPECTANCY, typed: "90", param: "lifeExpectancy", emitted: "lifeExpectancy" },
       {
-        name: "Bitcoin held",
+        name: BITCOIN_HELD,
         typed: "2.25",
         param: "currentSavings",
         emitted: "currentSavingsInBitcoin",
       },
-      { name: "Annual buy", typed: "5000", param: "annualBuy", emitted: "annualBuyInFiat" },
+      { name: ANNUAL_BUY, typed: "5000", param: "annualBuy", emitted: "annualBuyInFiat" },
+      { name: GROWTH_RATE, typed: "30", param: "bitcoinCagr", emitted: "annualPriceGrowth" },
+      { name: INFLATION_RATE, typed: "3.5", param: "inflationRate", emitted: "inflationRate" },
       {
-        name: "Price annual growth",
-        typed: "30",
-        param: "bitcoinCagr",
-        emitted: "annualPriceGrowth",
-      },
-      { name: "Annual inflation", typed: "3.5", param: "inflationRate", emitted: "inflationRate" },
-      {
-        name: "Desired annual income",
+        name: DESIRED_INCOME,
         typed: "150000",
         param: "desiredRetirementIncome",
         emitted: "desiredRetirementAnnualBudget",
@@ -173,7 +257,7 @@ describe("InputBar", () => {
     );
     await waitFor(() => expect(onCalculate).toHaveBeenCalled());
 
-    const field = screen.getByRole("spinbutton", { name: "Current age" });
+    const field = screen.getByRole("spinbutton", { name: CURRENT_AGE });
     await user.clear(field);
     await user.type(field, "44");
     await waitFor(() => expect(params().get("currentAge")).toBe("44"));
