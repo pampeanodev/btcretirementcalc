@@ -37,7 +37,13 @@ function App() {
           algorithm: useDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
         }}
       >
-        <div className="app">
+        {/* `px-*` because #root has none and the fields sat flush against the
+            window edge on a phone. `text-left` because #root also sets
+            `text-align: center`, which cascaded into every `<legend>` and
+            centred the input group labels. Both live here rather than in
+            App.scss so they survive that file being deleted; `.title` and
+            `.signature` centre themselves with flex, so neither moves. */}
+        <div className="app px-4 text-left sm:px-6">
           <div>
             <div className="title">
               <div>

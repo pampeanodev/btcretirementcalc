@@ -36,18 +36,35 @@ globalThis.ResizeObserver ??= class {
   disconnect() {}
 };
 
-// jsdom returns null from getContext, which makes antd's QRCode throw while
-// painting. Hand back an inert 2D context so it can no-op its way through.
-HTMLCanvasElement.prototype.getContext = (() =>
-  new Proxy(
+// jsdom returns null from getContext, so anything that paints — antd's QRCode,
+// chart.js — gets an inert 2D context here and no-ops its way through.
+//
+// `canvas` returns the element rather than undefined, and that one property is
+// load-bearing. chart.js only accepts a context whose `.canvas` is identical to
+// the element it asked about; without it `acquireContext` returns null and the
+// Chart constructor RETURNS EARLY, leaving an object whose `this.canvas` is
+// null. That object survives, and the next `chart.update()` — which any
+// re-render triggers, because the options object is rebuilt every render —
+// walks into `bindResponsiveEvents`, asks whether a null canvas is attached,
+// and throws "Cannot read properties of null (reading 'ownerDocument')" from
+// inside chart.js. The whole tree lands in the router's error boundary.
+//
+// So it looked like toggling the theme or picking the other strategy crashed
+// the app. Neither does: both were checked against a production build in
+// Chrome. The crash was this stub, and it made every test that re-renders a
+// chart unwritable.
+HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement) {
+  return new Proxy(
     {},
     {
+      // Arrow, so `this` is still the canvas `getContext` was called on.
       get: (_target, prop) => {
-        if (prop === "canvas") return undefined;
+        if (prop === "canvas") return this;
         if (prop === "measureText") return () => ({ width: 0 });
         if (prop === "getImageData") return () => ({ data: new Uint8ClampedArray(4) });
         if (prop === "createLinearGradient" || prop === "createPattern") return () => ({});
         return () => undefined;
       },
     },
-  )) as unknown as HTMLCanvasElement["getContext"];
+  );
+} as unknown as HTMLCanvasElement["getContext"];

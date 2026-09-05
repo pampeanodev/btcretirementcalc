@@ -57,8 +57,10 @@ describe("App", () => {
     const title = await screen.findByText("Bitcoin Retirement Calculator");
     await waitFor(() => expect(localStorage.getItem("theme")).toBe('"light"'));
 
-    // Two switches exist — dark mode here, Conservative/Optimized in InputPanel.
-    // Neither carries an accessible name, so scope the query to the header.
+    // The switch carries no accessible name, so scope the query to the header.
+    // It used to have to compete with InputPanel's Conservative/Optimized
+    // switch; that one is gone, and the scoping stays because the header is
+    // where this control lives, not because something else would match.
     const header = title.closest(".title");
     expect(header).not.toBeNull();
 
@@ -68,11 +70,71 @@ describe("App", () => {
     expect(document.body).toHaveClass("dark");
   });
 
-  it("renders the calculator with a retirement result", async () => {
+  it("gives each strategy its own retirement age", async () => {
     renderWithRouter(<App />);
 
-    expect(await screen.findByText("Your retirement age:")).toBeInTheDocument();
-    expect(screen.getByText("Chart view")).toBeInTheDocument();
-    expect(screen.getByText("Table view")).toBeInTheDocument();
+    const conservative = await screen.findByRole("button", {
+      name: /Sell everything at retirement/,
+    });
+    const optimized = screen.getByRole("button", { name: /Sell what you need/ });
+
+    // The ages are asserted, not just their presence. Both strategies are
+    // computed on every change now, and the two figures must differ: liquidating
+    // the whole stack at retirement funds it later than selling a slice a year.
+    // A card reading the other strategy's result, or one calculator's output
+    // wired into both cards, shows up here and nowhere else.
+    //
+    // 60 and 50 are fixed by the default inputs and the $70,000 price mocked
+    // above, not by the calendar — only the year labels move with the clock, and
+    // these patterns stop before them.
+    expect(conservative).toHaveAccessibleName(/^Sell everything at retirement 60 /);
+    expect(optimized).toHaveAccessibleName(/^Sell what you need 50 /);
+    expect(screen.queryByText(/not gonna make it/i)).toBeNull();
+  });
+
+  it("expands the selected strategy under the comparison", async () => {
+    renderWithRouter(<App />);
+    await screen.findByRole("button", { name: /Sell what you need/ });
+
+    // Optimized is selected on load, and it is the only strategy with a unit to
+    // choose, so the toggle group is proof that StrategyDetail mounted for it —
+    // the cards never render one. Without this the comparison could render
+    // alone and every other assertion in this file would still pass.
+    expect(await screen.findByRole("group", { name: "Chart unit" })).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+  });
+
+  it("expands the other strategy when its card is picked", async () => {
+    const user = userEvent.setup();
+    renderWithRouter(<App />);
+
+    const conservative = await screen.findByRole("button", {
+      name: /Sell everything at retirement/,
+    });
+    expect(conservative).toHaveAttribute("aria-pressed", "false");
+    await screen.findByRole("group", { name: "Chart unit" });
+
+    await user.click(conservative);
+
+    // Selling the whole stack leaves nothing to hold, so its chart plots dollars
+    // and bitcoin at once and there is no unit to choose — the toggle is gone.
+    // Asserting the pressed state alone would pass against a detail panel still
+    // showing the strategy nobody picked.
+    await waitFor(() => expect(screen.queryByRole("group", { name: "Chart unit" })).toBeNull());
+    expect(conservative).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("table")).toBeInTheDocument();
+  });
+
+  it("says so when the inputs put retirement out of reach", async () => {
+    renderWithRouter(<App />, ["/?currentAge=90&lifeExpectancy=86"]);
+
+    // An age past the life expectancy projects no years at all. InputPanel used
+    // to refuse the keystroke silently; nothing refuses it now, so the answer
+    // has to be an answer. Both cards still render, showing "—".
+    expect(await screen.findByText(/not gonna make it/i)).toBeInTheDocument();
+    expect(screen.getByText(/Stay humble/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sell what you need — / })).toBeInTheDocument();
+    // No detail panel: there is nothing to expand.
+    expect(screen.queryByRole("table")).toBeNull();
   });
 });
