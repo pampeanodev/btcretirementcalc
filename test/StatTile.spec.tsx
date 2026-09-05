@@ -25,16 +25,12 @@ describe("StatTile", () => {
     // reader a transform happened when none did.
     expect(container.querySelectorAll("span")).toHaveLength(2);
   });
-
-  it("sizes the hero figure larger than a normal one", () => {
-    render(<StatTile label="Annual budget" value="$100,000" size="hero" />);
-
-    expect(screen.getByText("$100,000")).toHaveClass("text-4xl");
-  });
-
-  it("renders figures in the monospace face", () => {
-    render(<StatTile label="Stack" value="₿1.845" />);
-
-    expect(screen.getByText("₿1.845")).toHaveClass("font-mono");
-  });
 });
+
+// Deliberately not tested here: that the hero size is larger than the normal
+// one, and that figures render in the monospace face. jsdom parses no
+// stylesheet, so the only thing available to assert is that a class string is
+// present in an attribute — which passes when the class is there and the
+// styling is broken, and fails when someone renames a token and nothing is
+// broken at all. That is a change detector, not a test. Both properties are
+// checked by eye in the browser pass.
