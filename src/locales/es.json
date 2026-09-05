@@ -41,5 +41,6 @@
   "table.savings-nominal": "Ahorros (nominal)",
   "table.savings-today": "Ahorros (hoy)",
   "table.year": "Año",
-  "table.you-bought": "flujos ₿"
+  "table.you-bought": "flujos ₿",
+  "table.savings-pair": "Ahorros (hoy + nominal)"
 }

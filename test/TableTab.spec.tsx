@@ -288,7 +288,41 @@ describe("TableTab", () => {
     expect(container.querySelector('[data-slot="table"]')).not.toHaveClass("max-h-[260px]");
 
     for (const header of screen.getAllByRole("columnheader")) {
-      expect(header).toHaveClass("sticky", "top-0");
+      // `bg-background` and the table's `border-separate border-spacing-0` are
+      // as load-bearing as `sticky` itself. Without the background the rows
+      // scroll THROUGH the pinned header; under `border-collapse` the browser
+      // hands the border to the table and the header loses its bottom rule. A
+      // review found both were held up by nothing but a screenshot.
+      expect(header).toHaveClass("sticky", "top-0", "bg-background");
     }
+
+    expect(container.querySelector('[data-slot="table"]')).toHaveClass(
+      "border-separate",
+      "border-spacing-0",
+    );
+  });
+
+  it("will not let the chooser strip a converted column of its nominal", async () => {
+    // The disclosure rule is binding, and a per-column toggle put the one state
+    // it forbids a single click away: discounted figures on screen with the
+    // nominal hidden. Hiding both is allowed — nothing converted is left to
+    // mislead anyone — so the two move as a pair rather than being pinned on.
+    const user = userEvent.setup();
+    render(<TableTab view={buildView()} />);
+
+    await user.click(screen.getByRole("button", { name: "Choose columns" }));
+
+    // The nominal half has no entry of its own to uncheck.
+    expect(screen.queryByRole("checkbox", { name: "Savings (nominal)" })).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole("checkbox", { name: "Savings (today + nominal)" }));
+
+    const withoutPair = headerTitles();
+    expect(withoutPair).not.toContain("Savings (today)");
+    expect(withoutPair).not.toContain("Savings (nominal)");
+
+    await user.click(screen.getByRole("checkbox", { name: "Savings (today + nominal)" }));
+
+    expect(headerTitles()).toEqual(ALL_COLUMNS);
   });
 });

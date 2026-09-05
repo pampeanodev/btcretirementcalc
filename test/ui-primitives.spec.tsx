@@ -50,6 +50,14 @@ describe("shadcn primitives", () => {
     const wrapper = container.querySelector('[data-slot="table-container"]');
     expect(wrapper).toHaveClass("max-h-[250px]");
     expect(container.querySelector("table")).not.toHaveClass("max-h-[250px]");
+
+    // `overflow-x-auto` is what keeps a wide table's overflow inside this
+    // element instead of pushing the page sideways, and "the body never scrolls
+    // horizontally" is a binding constraint. Nothing asserted it until a review
+    // pointed out that the browser measurement taken for it — body scrollWidth
+    // equal to clientWidth in a 2560px window — is equally true of a layout
+    // that is broken, so it could not tell the two apart.
+    expect(wrapper).toHaveClass("overflow-x-auto");
   });
 
   it("renders a Slider whose native range input carries the value", () => {

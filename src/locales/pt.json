@@ -41,5 +41,6 @@
   "table.savings-nominal": "Poupança (nominal)",
   "table.savings-today": "Poupança (hoje)",
   "table.year": "Ano",
-  "table.you-bought": "₿ fluxos"
+  "table.you-bought": "₿ fluxos",
+  "table.savings-pair": "Poupança (hoje + nominal)"
 }

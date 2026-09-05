@@ -23,6 +23,14 @@ interface Column {
   render: (p: ProjectionPoint) => ReactNode;
 }
 
+/**
+ * The converted savings column and its nominal counterpart. They are one unit
+ * as far as the reader is concerned: the disclosure rule is that a figure in
+ * today's money never appears without the future amount it came from.
+ * Order matters — [0] owns the chooser entry, [1] follows it.
+ */
+const DISCLOSURE_PAIR = ["savingsFiatReal", "savingsFiat"];
+
 const TableTab = ({ view }: { view: ProjectionView }) => {
   const [t] = useTranslation();
 
@@ -104,8 +112,20 @@ const TableTab = ({ view }: { view: ProjectionView }) => {
   // the table's own, so re-checking a column puts it back where it was.
   const shown = columns.filter((c) => shownKeys.includes(c.key));
 
-  const toggle = (key: string, on: boolean) =>
-    setShownKeys((keys) => (on ? [...keys, key] : keys.filter((k) => k !== key)));
+  const toggle = (key: string, on: boolean) => {
+    // The two savings columns move together. Hiding both is fine — no converted
+    // figure is left on screen — but hiding the nominal alone would leave a
+    // column of discounted money with nothing to compare it against, which is
+    // the one state the disclosure rule forbids. A per-key toggle put that
+    // state one click away.
+    const affected = DISCLOSURE_PAIR.includes(key) ? DISCLOSURE_PAIR : [key];
+
+    setShownKeys((keys) =>
+      on
+        ? [...keys, ...affected.filter((k) => !keys.includes(k))]
+        : keys.filter((k) => !affected.includes(k)),
+    );
+  };
 
   return (
     <div className="space-y-2">
@@ -150,18 +170,22 @@ const TableTab = ({ view }: { view: ProjectionView }) => {
           <PopoverContent align="end" className="w-56">
             <p className="mb-2 text-sm font-medium">{t("table.config.title")}</p>
             <div className="flex flex-col gap-2">
-              {columns.map((c) => (
-                <div key={c.key} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`col-${c.key}`}
-                    checked={shownKeys.includes(c.key)}
-                    onCheckedChange={(on) => toggle(c.key, Boolean(on))}
-                  />
-                  <Label htmlFor={`col-${c.key}`} className="text-sm font-normal">
-                    {c.title}
-                  </Label>
-                </div>
-              ))}
+              {columns
+                // The pair's second half has no entry of its own — it is not a
+                // column the reader can decide about separately.
+                .filter((c) => c.key !== DISCLOSURE_PAIR[1])
+                .map((c) => (
+                  <div key={c.key} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`col-${c.key}`}
+                      checked={shownKeys.includes(c.key)}
+                      onCheckedChange={(on) => toggle(c.key, Boolean(on))}
+                    />
+                    <Label htmlFor={`col-${c.key}`} className="text-sm font-normal">
+                      {c.key === DISCLOSURE_PAIR[0] ? t("table.savings-pair") : c.title}
+                    </Label>
+                  </div>
+                ))}
             </div>
           </PopoverContent>
         </Popover>
