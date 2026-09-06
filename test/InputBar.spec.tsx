@@ -112,9 +112,7 @@ describe("InputBar", () => {
 
   it("falls back to the default when a parameter is present but blank", async () => {
     const onCalculate = vi.fn();
-    renderWithRouter(<InputBar onCalculate={onCalculate} />, [
-      "/?currentAge=&inflationRate=%20",
-    ]);
+    renderWithRouter(<InputBar onCalculate={onCalculate} />, ["/?currentAge=&inflationRate=%20"]);
 
     await waitFor(() => expect(onCalculate).toHaveBeenCalled());
     // Blank is the case a plain `Number()` gets wrong rather than loudly: it

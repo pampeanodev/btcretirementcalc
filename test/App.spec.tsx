@@ -47,7 +47,11 @@ describe("App", () => {
 
     // use-local-storage serializes with JSON.stringify, hence the quoted value.
     await waitFor(() => expect(localStorage.getItem("theme")).toBe('"light"'));
-    expect(document.body).not.toHaveClass("dark");
+    // Asserted positively. `body` used to carry a `dark` class as well, and the
+    // negative form of that assertion survived the class being removed for good
+    // — it passes against a theme that never applies at all. `data-theme` on
+    // <html> is what theme.css actually resolves its tokens against.
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
   });
 
   it("flips the persisted theme when the dark-mode switch is toggled", async () => {
@@ -67,7 +71,7 @@ describe("App", () => {
     await user.click(within(header as HTMLElement).getByRole("switch"));
 
     await waitFor(() => expect(localStorage.getItem("theme")).toBe('"dark"'));
-    expect(document.body).toHaveClass("dark");
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
   });
 
   it("gives each strategy its own retirement age", async () => {
