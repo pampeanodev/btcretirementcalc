@@ -26,7 +26,7 @@ hand-duplicated in `[data-theme='dark']` blocks per file, and
 
 Underneath, two theming systems disagree: antd 6's `ConfigProvider` algorithm
 and the manual SCSS overrides. The redesign removes the first of them outright —
-see *Styling* — and folds the second into tokens.
+see _Styling_ — and folds the second into tokens.
 
 ## Scope
 
@@ -35,16 +35,16 @@ behaviour. Not a product rethink — no onboarding, no presets, no new inputs.
 
 ## Decisions
 
-| Question | Decision |
-|---|---|
-| Depth | Re-layout: skin plus hierarchy plus mobile |
-| Typography | Mono kept deliberately — figures, prices and tables. Sans for headings and prose |
-| Currency | Today's dollars, with the nominal amount disclosed alongside |
-| Optimized chart | Draining ₿ tank plus annual sales, with a ₿ / $ toggle |
-| Conservative chart | Its own form: a cash tank that fills at liquidation and drains |
-| Budget series | Not plotted — see below |
-| Layout | Both strategies side by side; the strategy switch disappears |
-| Component library | antd removed; shadcn/ui on Base UI, generated into the repo |
+| Question           | Decision                                                                         |
+| ------------------ | -------------------------------------------------------------------------------- |
+| Depth              | Re-layout: skin plus hierarchy plus mobile                                       |
+| Typography         | Mono kept deliberately — figures, prices and tables. Sans for headings and prose |
+| Currency           | Today's dollars, with the nominal amount disclosed alongside                     |
+| Optimized chart    | Draining ₿ tank plus annual sales, with a ₿ / $ toggle                           |
+| Conservative chart | Its own form: a cash tank that fills at liquidation and drains                   |
+| Budget series      | Not plotted — see below                                                          |
+| Layout             | Both strategies side by side; the strategy switch disappears                     |
+| Component library  | antd removed; shadcn/ui on Base UI, generated into the repo                      |
 
 ### Why the budget is not a chart series
 
@@ -86,13 +86,13 @@ src/services/presentValue.ts
 interface ProjectionPoint {
   year: number;
   age: number;
-  bitcoinPrice: number;        // nominal
+  bitcoinPrice: number; // nominal
   savingsBitcoin: number;
-  savingsFiat: number;         // nominal
-  savingsFiatReal: number;     // today's dollars
+  savingsFiat: number; // nominal
+  savingsFiatReal: number; // today's dollars
   bitcoinFlow: number;
-  annualBudget: number;        // nominal
-  annualBudgetReal: number;    // today's dollars
+  annualBudget: number; // nominal
+  annualBudgetReal: number; // today's dollars
 }
 ```
 
@@ -104,8 +104,8 @@ valid regression net for the money maths.
 
 `Calculator.tsx` currently branches on `data.optimized` and computes one
 strategy. It will compute both on every input change and hand each to its own
-card. `InputData.optimized` stops selecting *what is calculated* and starts
-selecting *which strategy's detail is expanded* — the `optimized` query
+card. `InputData.optimized` stops selecting _what is calculated_ and starts
+selecting _which strategy's detail is expanded_ — the `optimized` query
 parameter keeps working, so shared links survive.
 
 ### Component structure
@@ -129,7 +129,7 @@ New components:
 - **`ProjectionChart`** takes a `ProjectionView`, a variant, and a `unit`.
   - `stack` (optimized): ₿ held as a filled area draining from retirement, and
     ₿ sold each year as a second area below it. Switching `unit` to fiat swaps
-    the series for value in today's dollars, where the same tank *rises* instead
+    the series for value in today's dollars, where the same tank _rises_ instead
     of draining.
   - The ₿ / $ control lives only on the detail chart. Cards render minis at a
     fixed unit — ₿ for optimized, fiat for conservative — because two toggles on
@@ -138,10 +138,10 @@ New components:
   - `cash` (conservative): fiat cash as the filled area — near zero, stepping up
     at liquidation, then draining — with ₿ held as a thin line that ends at the
     cut.
-- **`InputGroup`** wraps labelled sets: *About you*, *Your bitcoin*,
-  *Assumptions*, *Goal*.
+- **`InputGroup`** wraps labelled sets: _About you_, _Your bitcoin_,
+  _Assumptions_, _Goal_.
 - **`ScrubField`** is the merged number-input-plus-track control described under
-  *Sliders* below. `InputGroup` composes `ScrubField` and plain number inputs
+  _Sliders_ below. `InputGroup` composes `ScrubField` and plain number inputs
   interchangeably.
 
 `Summary` and `OptimizedSummary` are deleted; they differ only in `toUsd` vs
@@ -156,18 +156,18 @@ measurements below replaced it.
 **Why the switch.** Three findings, each measured on this repository rather than
 assumed:
 
-- *Utilities were silently inert on antd components.* Adding `bg-black` to a live
+- _Utilities were silently inert on antd components._ Adding `bg-black` to a live
   `.ant-btn` left its computed background unchanged. antd 6 injects its runtime
   CSS unlayered, and unlayered CSS beats every layered rule regardless of
   specificity, so a `className` on an antd widget did nothing — with no error
   anywhere. `<StyleProvider layer>` fixes it, but the whole redesign would then
   rest on a cascade arrangement that fails silently the moment it regresses.
-- *The antd surface is eight import lines across eight files, in 1153 lines of
-  TSX,* and none of it uses the features that make antd hard to leave. The Table
+- _The antd surface is eight import lines across eight files, in 1153 lines of
+  TSX,_ and none of it uses the features that make antd hard to leave. The Table
   runs `pagination={false}`, `bordered`, `scroll={{ y: 250 }}` — no sorting, no
   filters, no virtualization. `InputNumber` uses `min`/`max`/`step`/`addonAfter`.
-- *antd is 665 KB of a 1290 KB bundle (51.9%); the application it dresses is
-  27 KB (2.1%).* Roughly 109 KB of that is `rc-tree`, `rc-select`, `rc-menu` and
+- _antd is 665 KB of a 1290 KB bundle (51.9%); the application it dresses is
+  27 KB (2.1%)._ Roughly 109 KB of that is `rc-tree`, `rc-select`, `rc-menu` and
   `rc-form`, which this app never imports — antd's `Table` pulls them in
   statically for the features it has disabled, so tree-shaking cannot remove
   them. The equivalent shadcn stack measures 142 KB.
@@ -252,12 +252,12 @@ load-bearing rather than cosmetic: two cards side by side must collapse.
 Tailwind's default breakpoints are adopted as-is rather than invented. Behaviour
 per region:
 
-| Region | Small | Medium | Large |
-|---|---|---|---|
-| Input bar | one column | two columns | single row above the results |
-| Strategy cards | stacked, selected one first | side by side | side by side |
-| Detail chart | full width, shorter aspect | full width | full width |
-| Table | horizontal scroll inside its own container | scroll | full |
+| Region         | Small                                      | Medium       | Large                        |
+| -------------- | ------------------------------------------ | ------------ | ---------------------------- |
+| Input bar      | one column                                 | two columns  | single row above the results |
+| Strategy cards | stacked, selected one first                | side by side | side by side                 |
+| Detail chart   | full width, shorter aspect                 | full width   | full width                   |
+| Table          | horizontal scroll inside its own container | scroll       | full                         |
 
 The page body never scrolls horizontally. The table is the only element allowed
 to, and it does so inside its own overflow container.
@@ -279,7 +279,7 @@ areas, dual axes and custom tooltips. No new charting dependency.
 
 The dual-axis configuration added while fixing #53 stays available for the
 `cash` variant, which genuinely plots two units. The `stack` variant plots one
-unit at a time, which disposes of the *cross-unit* half of the scale problem.
+unit at a time, which disposes of the _cross-unit_ half of the scale problem.
 
 **Dollar axes are logarithmic; bitcoin axes stay linear.** Plotting one unit at
 a time does nothing about the second half of the problem — that fifty years of
@@ -300,7 +300,7 @@ Two consequences follow, and both are requirements rather than details:
   and a drained conservative pot can reach zero at the end of life. Those points
   become `null`, not `0`. This is more honest as well as necessary: before
   retirement there is no withdrawal, and a zero draws a line along the axis
-  asserting that the withdrawal *was* zero.
+  asserting that the withdrawal _was_ zero.
 - **A log axis must say so.** Distances on it are not proportional to
   differences, and a reader who misses that misreads the chart badly. The axis
   is labelled, and it carries the "Today's dollars" title required below.
@@ -315,12 +315,12 @@ while the same reader looking at a `StatTile` gets the nominal inline.
 
 ## Sliders: merged, not removed
 
-`annualBuy` and `growthRate` each have a slider *and* a number input today. They
+`annualBuy` and `growthRate` each have a slider _and_ a number input today. They
 are not redundant — they are different affordances. Typing sets a value; dragging
 teaches sensitivity, which is most of why someone opens a retirement calculator.
 
 The comparison layout strengthens the case rather than weakening it: dragging one
-slider moves *both* strategy cards, so the user watches the gap between retiring
+slider moves _both_ strategy cards, so the user watches the gap between retiring
 at 57 and at 43 open and close in real time. That is the product's central
 question answered by a gesture.
 
@@ -389,9 +389,9 @@ ship as the dual-axis chart that exists today, and only the `stack` variant is
 new.
 
 **~~Tailwind and antd have to coexist.~~** Resolved by removing antd. The spike
-this risk called for was run and reported that they could *not* be reconciled
+this risk called for was run and reported that they could _not_ be reconciled
 safely: utilities on antd components were inert, and the fix left the redesign
-resting on a cascade arrangement that fails silently. See *Styling* above.
+resting on a cascade arrangement that fails silently. See _Styling_ above.
 
 **The component library is now source in this repository.** shadcn components are
 copied in, not installed, so upstream fixes do not arrive automatically and local
@@ -401,7 +401,7 @@ model makes deliberately; the mitigation is that each local edit carries a
 comment saying why it exists, so a regeneration diff shows what was lost.
 
 **Removing antd is a wide change with a narrow test net.** Eleven widgets across
-eight files go at once, and jsdom cannot tell whether the replacements *look*
+eight files go at once, and jsdom cannot tell whether the replacements _look_
 right. `build-smoke.spec.ts` proves the bundle still boots; everything visual is
 checked by hand in a browser, per the Testing section. The migration is therefore
 sequenced so the app compiles and renders at every step rather than being broken

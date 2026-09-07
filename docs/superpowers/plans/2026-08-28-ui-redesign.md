@@ -31,20 +31,20 @@
 
 **Create:**
 
-| File | Responsibility |
-|---|---|
-| `src/styles/theme.css` | Tailwind entry, `@theme` tokens, dark variant — **done, Task 1** |
-| `src/components/ui/*` | shadcn's generated primitives — **done, Task 1**. Not hand-authored |
-| `src/lib/utils.ts` | `cn()` — **done, Task 1** |
-| `src/models/ProjectionView.ts` | `ProjectionPoint`, `ProjectionView` types |
-| `src/services/presentValue.ts` | Discounting and the nominal→view transform |
-| `src/components/common/StatTile.tsx` | Label, figure, optional nominal footnote |
-| `src/components/common/ScrubField.tsx` | Number input merged with its slider |
-| `src/components/Input/InputBar.tsx` | Grouped inputs, replaces `InputPanel` |
-| `src/components/Results/ProjectionChart.tsx` | `cash` and `stack` variants |
-| `src/components/Results/StrategyCard.tsx` | One strategy's headline + mini chart |
-| `src/components/Results/StrategyComparison.tsx` | The two cards, selection state |
-| `src/components/Results/StrategyDetail.tsx` | Full chart + table for the selection |
+| File                                            | Responsibility                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------------- |
+| `src/styles/theme.css`                          | Tailwind entry, `@theme` tokens, dark variant — **done, Task 1**    |
+| `src/components/ui/*`                           | shadcn's generated primitives — **done, Task 1**. Not hand-authored |
+| `src/lib/utils.ts`                              | `cn()` — **done, Task 1**                                           |
+| `src/models/ProjectionView.ts`                  | `ProjectionPoint`, `ProjectionView` types                           |
+| `src/services/presentValue.ts`                  | Discounting and the nominal→view transform                          |
+| `src/components/common/StatTile.tsx`            | Label, figure, optional nominal footnote                            |
+| `src/components/common/ScrubField.tsx`          | Number input merged with its slider                                 |
+| `src/components/Input/InputBar.tsx`             | Grouped inputs, replaces `InputPanel`                               |
+| `src/components/Results/ProjectionChart.tsx`    | `cash` and `stack` variants                                         |
+| `src/components/Results/StrategyCard.tsx`       | One strategy's headline + mini chart                                |
+| `src/components/Results/StrategyComparison.tsx` | The two cards, selection state                                      |
+| `src/components/Results/StrategyDetail.tsx`     | Full chart + table for the selection                                |
 
 **Modify:** `vite.config.ts`, `src/main.tsx`, `src/App.tsx`, `src/components/Calculator.tsx`, `src/components/Results/tabs/TableTab.tsx`, `src/components/Misc/Donate.tsx`, `src/components/Misc/OnChain.tsx`, `src/components/Results/tabs/AnnualBudgetExplanation.tsx`, `test/App.spec.tsx`, `test/Donate.spec.tsx`.
 
@@ -101,11 +101,13 @@ Numbering is deliberately preserved: later tasks and the ledger reference task n
 ### Task 3: Present value, outside the calculators
 
 **Files:**
+
 - Create: `src/models/ProjectionView.ts`
 - Create: `src/services/presentValue.ts`
 - Create: `test/presentValue.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `CalculationResult` and `InputData` from `src/models/`
 - Produces:
   - `toPresentValue(nominal: number, yearsFromNow: number, inflationRate: number): number`
@@ -239,10 +241,7 @@ import { getInflationFactor } from "./calculationUtils";
 export const toPresentValue = (nominal: number, yearsFromNow: number, inflationRate: number) =>
   nominal / Math.pow(getInflationFactor(inflationRate), yearsFromNow);
 
-export const toProjectionView = (
-  result: CalculationResult,
-  input: InputData,
-): ProjectionView => {
+export const toProjectionView = (result: CalculationResult, input: InputData): ProjectionView => {
   const real = (nominal: number, age: number) =>
     toPresentValue(nominal, age - input.currentAge, input.inflationRate);
 
@@ -296,10 +295,12 @@ git commit -m "feat: add present-value transform outside the calculators"
 ### Task 4: StatTile
 
 **Files:**
+
 - Create: `src/components/common/StatTile.tsx`
 - Create: `test/StatTile.spec.tsx`
 
 **Interfaces:**
+
 - Consumes: nothing
 - Produces: `StatTile` with props `{ label: string; value: string; nominal?: string; size?: "hero" | "normal" }`
 
@@ -386,11 +387,13 @@ git commit -m "feat: add StatTile with nominal disclosure"
 ### Task 5: ScrubField
 
 **Files:**
+
 - Create: `src/components/common/ScrubField.tsx`
 - Create: `test/ScrubField.spec.tsx`
 - Modify: `src/components/ui/slider.tsx` (forward a label to the thumb)
 
 **Interfaces:**
+
 - Consumes: `Input` and `Slider` from `src/components/ui/`
 - Produces: `ScrubField` with props `{ label: string; name: string; value: number; min: number; max: number; step?: number; unit?: string; onChange: (value: number) => void }`
 
@@ -428,7 +431,7 @@ and on the `SliderPrimitive.Thumb` inside the map:
   // the input has no accessible name — `aria-label` on the Root only names
   // the wrapping role="group".
   aria-label={thumbLabel}
-  className="..."   // unchanged
+  className="..." // unchanged
 />
 ```
 
@@ -447,7 +450,14 @@ import ScrubField from "../src/components/common/ScrubField";
 describe("ScrubField", () => {
   it("shows one accessible control for the value", () => {
     render(
-      <ScrubField label="Annual buy" name="annualBuy" value={12000} min={0} max={200000} onChange={() => {}} />,
+      <ScrubField
+        label="Annual buy"
+        name="annualBuy"
+        value={12000}
+        min={0}
+        max={200000}
+        onChange={() => {}}
+      />,
     );
 
     // jest-dom coerces a number input's value, so this is a number, not "12000".
@@ -458,7 +468,14 @@ describe("ScrubField", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <ScrubField label="Growth" name="growthRate" value={20} min={0} max={100} onChange={onChange} />,
+      <ScrubField
+        label="Growth"
+        name="growthRate"
+        value={20}
+        min={0}
+        max={100}
+        onChange={onChange}
+      />,
     );
 
     const field = screen.getByRole("spinbutton", { name: "Growth" });
@@ -471,7 +488,14 @@ describe("ScrubField", () => {
 
   it("gives the slider the same accessible name and bounds", () => {
     render(
-      <ScrubField label="Growth" name="growthRate" value={20} min={0} max={100} onChange={() => {}} />,
+      <ScrubField
+        label="Growth"
+        name="growthRate"
+        value={20}
+        min={0}
+        max={100}
+        onChange={() => {}}
+      />,
     );
 
     // `hidden: true`: Base UI keeps the thumb at visibility:hidden until it
@@ -595,11 +619,13 @@ git commit -m "feat: add ScrubField merging a number input with its slider"
 ### Task 6: ProjectionChart
 
 **Files:**
+
 - Create: `src/components/Results/ProjectionChart.tsx`
 - Create: `test/ProjectionChart.spec.tsx`
 - Modify: `src/models/LineChartProps.ts` (delete — superseded)
 
 **Interfaces:**
+
 - Consumes: `ProjectionView` from Task 3
 - Produces: `ProjectionChart` with props `{ view: ProjectionView; variant: "cash" | "stack"; unit?: "btc" | "fiat" }`, and `export const buildSeries(view, variant, unit)` returning `{ labels: string[]; datasets: {label: string; data: number[]}[] }`
 
@@ -733,7 +759,10 @@ export const buildSeries = (
           labels,
           datasets: [
             { label: "$ value", data: view.points.map((p) => p.savingsFiatReal) },
-            { label: "$ withdrawn", data: view.points.map((p) => (p.bitcoinFlow < 0 ? p.annualBudgetReal : 0)) },
+            {
+              label: "$ withdrawn",
+              data: view.points.map((p) => (p.bitcoinFlow < 0 ? p.annualBudgetReal : 0)),
+            },
           ],
         };
   }
@@ -807,11 +836,18 @@ const ProjectionChart = ({ view, variant, unit = "btc", height = 260 }: Projecti
               type: "linear",
               position: "left",
               ticks: {
-                callback: (v) => (unit === "btc" && !dualAxis ? `₿${Number(v).toFixed(2)}` : toUsd(Number(v))),
+                callback: (v) =>
+                  unit === "btc" && !dualAxis ? `₿${Number(v).toFixed(2)}` : toUsd(Number(v)),
               },
             },
             ...(dualAxis
-              ? { btc: { type: "linear" as const, position: "right" as const, grid: { drawOnChartArea: false } } }
+              ? {
+                  btc: {
+                    type: "linear" as const,
+                    position: "right" as const,
+                    grid: { drawOnChartArea: false },
+                  },
+                }
               : {}),
           },
         }}
@@ -845,11 +881,13 @@ git commit -m "feat: add ProjectionChart with cash and stack variants"
 ### Task 7: StrategyCard and StrategyComparison
 
 **Files:**
+
 - Create: `src/components/Results/StrategyCard.tsx`
 - Create: `src/components/Results/StrategyComparison.tsx`
 - Create: `test/StrategyComparison.spec.tsx`
 
 **Interfaces:**
+
 - Consumes: `ProjectionView`, `StatTile`, `ProjectionChart`
 - Produces:
   - `StrategyCard` props `{ view: ProjectionView; title: string; selected: boolean; onSelect: () => void }`
@@ -1099,11 +1137,13 @@ git commit -m "feat: add the side-by-side strategy comparison"
 ### Task 8: The table discloses nominal figures
 
 **Files:**
+
 - Modify: `src/components/Results/tabs/TableTab.tsx` (whole file)
 - Delete: `src/components/Results/tabs/TableTab.scss`
 - Create: `test/TableTab.spec.tsx`
 
 **Interfaces:**
+
 - Consumes: `ProjectionView`; `Table`, `Popover`, `Button`, `Checkbox`, `Label` from `src/components/ui/`
 - Produces: `TableTab` props change from `CalculationResult` to `{ view: ProjectionView }`
 
@@ -1213,9 +1253,7 @@ const TableTab = ({ view }: { view: ProjectionView }) => {
     {
       key: "savingsFiat",
       title: "Savings (nominal)",
-      render: (p) => (
-        <span className="font-mono text-ink-muted">{toUsd(p.savingsFiat)}</span>
-      ),
+      render: (p) => <span className="font-mono text-ink-muted">{toUsd(p.savingsFiat)}</span>,
     },
     {
       key: "savingsBitcoin",
@@ -1328,10 +1366,12 @@ git commit -m "feat: show nominal savings beside the converted column"
 ### Task 9: StrategyDetail
 
 **Files:**
+
 - Create: `src/components/Results/StrategyDetail.tsx`
 - Create: `test/StrategyDetail.spec.tsx`
 
 **Interfaces:**
+
 - Consumes: `ProjectionView`, `ProjectionChart`, `TableTab`
 - Produces: `StrategyDetail` props `{ view: ProjectionView }`
 
@@ -1422,9 +1462,7 @@ const StrategyDetail = ({ view }: { view: ProjectionView }) => {
               aria-pressed={unit === u}
               onClick={() => setUnit(u)}
               className={`rounded-full px-3 py-1 font-mono text-xs ${
-                unit === u
-                  ? "bg-bitcoin text-black"
-                  : "border border-border text-ink-muted"
+                unit === u ? "bg-bitcoin text-black" : "border border-border text-ink-muted"
               }`}
             >
               {u === "btc" ? "₿" : "$"}
@@ -1464,10 +1502,12 @@ git commit -m "feat: add StrategyDetail with the unit toggle"
 ### Task 10: InputBar
 
 **Files:**
+
 - Create: `src/components/Input/InputBar.tsx`
 - Create: `test/InputBar.spec.tsx`
 
 **Interfaces:**
+
 - Consumes: `ScrubField`, `useSearchParams`
 - Produces: `InputBar` props `{ onCalculate: (data: InputData) => void }` — the same contract `InputPanel` had, minus `clearChart`
 
@@ -1590,9 +1630,7 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-xs uppercase tracking-wide text-ink-muted">
-          About you
-        </legend>
+        <legend className="text-xs uppercase tracking-wide text-ink-muted">About you</legend>
         <label className="flex items-center justify-between gap-2 text-xs">
           {t("input.current-age")}
           <Input
@@ -1620,9 +1658,7 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
       </fieldset>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-xs uppercase tracking-wide text-ink-muted">
-          Your bitcoin
-        </legend>
+        <legend className="text-xs uppercase tracking-wide text-ink-muted">Your bitcoin</legend>
         <label className="flex items-center justify-between gap-2 text-xs">
           {t("input.savings-btc")}
           <Input
@@ -1707,10 +1743,12 @@ git commit -m "feat: add InputBar with grouped inputs and scrub fields"
 This is the task where the new UI replaces the old one. Everything before it was additive.
 
 **Files:**
+
 - Modify: `src/components/Calculator.tsx` (whole file)
 - Modify: `test/App.spec.tsx`
 
 **Interfaces:**
+
 - Consumes: `InputBar`, `StrategyComparison`, `StrategyDetail`, `toProjectionView`
 - Produces: nothing downstream
 
@@ -1755,7 +1793,9 @@ const Calculator = () => {
       return;
     }
     setConservative(toProjectionView(calculate({ ...input, optimized: false }, btcPrice), input));
-    setOptimized(toProjectionView(calculateOptimal({ ...input, optimized: true }, btcPrice), input));
+    setOptimized(
+      toProjectionView(calculateOptimal({ ...input, optimized: true }, btcPrice), input),
+    );
   }, [input, btcPrice]);
 
   if (!btcPrice || btcPrice <= 0) {
@@ -1805,14 +1845,14 @@ export default Calculator;
 In `test/App.spec.tsx`, the calculator test queries `"Your retirement age:"`, which no longer exists. Replace that test body with:
 
 ```tsx
-  it("renders both strategies with a retirement result", async () => {
-    renderWithRouter(<App />);
+it("renders both strategies with a retirement result", async () => {
+  renderWithRouter(<App />);
 
-    await screen.findByText("Bitcoin Retirement Calculator");
+  await screen.findByText("Bitcoin Retirement Calculator");
 
-    expect(await screen.findByRole("button", { name: /sell everything/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /sell what you need/i })).toBeInTheDocument();
-  });
+  expect(await screen.findByRole("button", { name: /sell everything/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /sell what you need/i })).toBeInTheDocument();
+});
 ```
 
 The theme tests scope their switch query with `title.closest(".title")`. That still works — App's header is unchanged by this task.
@@ -1844,6 +1884,7 @@ git commit -m "feat: compute both strategies and show them side by side"
 This task ends with zero `antd` imports and zero `.scss` files. It is wide but mechanical: everything it touches has already been superseded, except the four small call sites in Step 4.
 
 **Files:**
+
 - Delete: `src/components/Results/tabs/Result.tsx`, `Summary.tsx`, `OptimizedSummary.tsx`
 - Delete: `src/components/Results/InfoBox.tsx`, `InfoBox.scss`
 - Delete: `src/components/Input/InputPanel.tsx`, `InputPanel.scss`
@@ -1936,12 +1977,7 @@ export default OnChain;
 ```tsx
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import DonateOnChain from "./OnChain";
 
 const Donate = () => {
@@ -1951,9 +1987,7 @@ const Donate = () => {
     <Popover>
       <PopoverTrigger render={<Button size="sm">{t("donate.donate")}</Button>} />
       <PopoverContent align="start" side="top" className="w-auto">
-        <PopoverTitle className="mb-2 text-sm font-medium">
-          {t("donate.qrcode.title")}
-        </PopoverTitle>
+        <PopoverTitle className="mb-2 text-sm font-medium">{t("donate.qrcode.title")}</PopoverTitle>
         <div className="donate-content flex min-h-[270px] min-w-[270px] flex-col items-center justify-center">
           <DonateOnChain />
         </div>
@@ -1970,12 +2004,7 @@ export default Donate;
 ```tsx
 import { CircleHelp } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 
 const AnnualBudgetExplanation = () => {
   const [t] = useTranslation();
@@ -2153,6 +2182,7 @@ git commit -m "refactor: remove antd and delete what the redesign replaced"
 ### Task 13: Accessibility and the final responsive pass
 
 **Files:**
+
 - Modify: `test/App.spec.tsx`
 
 The theme switch already carries `aria-label={t("app.theme-toggle")}` — Task 12 added it when it ported `App.tsx` off antd. Confirm the English value resolves to `Dark mode` before changing the test:
@@ -2166,7 +2196,7 @@ grep -rn "theme-toggle" src/locales
 In `test/App.spec.tsx`, the theme toggle test scopes by `.title` because the switches had no names. Replace that query:
 
 ```tsx
-    await user.click(screen.getByRole("switch", { name: "Dark mode" }));
+await user.click(screen.getByRole("switch", { name: "Dark mode" }));
 ```
 
 and drop the `header`/`within` lines and the now-unused `within` import.
