@@ -1,127 +1,86 @@
-import { useState } from "react";
-import "chart.js/auto";
-import "./Calculator.scss";
+import { useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useBitcoinPrice } from "../hooks/useBitcoinPrice";
-import InputPanel from "./Input/InputPanel";
 import { InputData } from "../models/InputData";
-import { Spin } from "antd";
-import { LineChartProps, LineChartData } from "../models/LineChartProps";
-import { AnnualTrackingData, CalculationResult } from "../models/CalculationResult";
-import { calculateOptimal } from "../services/bitcoinRetirementOptimizedCalculator";
 import { calculate } from "../services/bitcoinRetirementCalculator";
-import { BITCOIN_COLOR } from "../constants";
-import Result from "./Results/tabs/Result";
+import { calculateOptimal } from "../services/bitcoinRetirementOptimizedCalculator";
+import { toProjectionView } from "../services/presentValue";
+import InputBar from "./Input/InputBar";
+import StrategyComparison, { StrategyKey } from "./Results/StrategyComparison";
+import StrategyDetail from "./Results/StrategyDetail";
+
+const REFRESH_INTERVAL_MS = 1000 * 60 * 10;
 
 const Calculator = () => {
-  const [savingsBitcoin, setSavingsBitcoin] = useState<number>(0);
-  const [savingsFiat, setSavingsFiat] = useState<number>(0);
-  const [retirementAge, setRetirementAge] = useState<number>(0);
-  const [annualBudget, setAnnualBudget] = useState<number>(0);
-  const [bitcoinPriceAtRetirement, setBitcoinPriceAtRetirement] = useState<number>(0);
-  const [chartData, setChartData] = useState<LineChartProps>();
-  const [tableData, setTableData] = useState<AnnualTrackingData[]>([]);
-  const [optimized, setOptimized] = useState<boolean>(false);
-  const [canRetire, setCanRetire] = useState<boolean>(false);
+  const [input, setInput] = useState<InputData>();
+  const [selected, setSelected] = useState<StrategyKey>("optimized");
+  const [t] = useTranslation();
+  const btcPrice = useBitcoinPrice(REFRESH_INTERVAL_MS);
 
-  const interval = 1000 * 60 * 10;
-  const btcPrice = useBitcoinPrice(interval);
-
-  const clearChart = () => {
-    setChartData(undefined);
-  };
-
-  const getChartLabels = (start: number, end: number) => {
-    const years = Array.from(new Array(end - start));
-    return years.map((_, i) => (i + start + 1).toString());
-  };
-
-  const setChartProps = (fiatDataSet: number[], btcDataSet: number[], labels: string[]) => {
-    const dataSets: LineChartData[] = [];
-    if (fiatDataSet.length) {
-      dataSets.push({
-        label: "USD",
-        fill: undefined,
-        borderColor: "darkGreen",
-        backgroundColor: "green",
-        data: fiatDataSet,
-        yAxisID: "usd",
-      });
+  // Both strategies are computed on every change now. The switch used to pick
+  // which one to calculate; the comparison shows both, so it picks which one
+  // the detail panel expands.
+  //
+  // Derived, not stored. The pair is a pure function of the inputs and the
+  // price, and `useBitcoinPrice` refetches every ten minutes, so both belong in
+  // the dependency list — recomputing only on an input change would leave the
+  // projections built on a price the app has stopped displaying. Holding them
+  // in state and filling them from an effect would render one frame of stale
+  // figures on every change, which is what `react-hooks/set-state-in-effect`
+  // is pointing at.
+  const projections = useMemo(() => {
+    if (!input || !btcPrice || btcPrice <= 0) {
+      return undefined;
     }
-    if (btcDataSet.length) {
-      dataSets.push({
-        label: "BTC",
-        fill: undefined,
-        borderColor: BITCOIN_COLOR,
-        backgroundColor: "orange",
-        data: btcDataSet,
-        yAxisID: "btc",
-      });
-    }
+    return {
+      conservative: toProjectionView(calculate({ ...input, optimized: false }, btcPrice), input),
+      optimized: toProjectionView(calculateOptimal({ ...input, optimized: true }, btcPrice), input),
+    };
+  }, [input, btcPrice]);
 
-    setChartData({ labels, datasets: dataSets });
-  };
-
-  const refreshCalculations = (data: InputData) => {
-    const calculationResult = data.optimized
-      ? calculateOptimal(data, btcPrice!)
-      : calculate(data, btcPrice!);
-
-    setRetirementAge(calculationResult.retirementAge);
-    setSavingsFiat(calculationResult.savingsFiat);
-    setSavingsBitcoin(calculationResult.savingsBitcoin);
-    setBitcoinPriceAtRetirement(calculationResult.bitcoinPriceAtRetirementAge);
-    setAnnualBudget(calculationResult.annualRetirementBudget);
-    setOptimized(data.optimized);
-    setCanRetire(calculationResult.canRetire);
-
-    setTableData(calculationResult.dataSet);
-
-    updateChartWithAfterRetirementData(calculationResult, data);
-  };
-
-  function updateChartWithAfterRetirementData(
-    calculationResult: CalculationResult,
-    data: InputData,
-  ) {
-    const btcDataSet = calculationResult.dataSet.map((item) => item.savingsBitcoin);
-    // The fiat series used to be dropped in optimized mode, because savingsFiat
-    // held the yearly withdrawal there instead of the remaining stack and drew a
-    // line that rose while savings fell. It means remaining savings in both
-    // strategies now, so both can be plotted.
-    const fiatDataSet = calculationResult.dataSet.map((item) => item.savingsFiat);
-
-    setChartProps(fiatDataSet, btcDataSet, getChartLabels(data.currentAge, data.lifeExpectancy));
+  if (!btcPrice || btcPrice <= 0) {
+    return (
+      <div
+        role="status"
+        aria-label={t("app.loading")}
+        className="flex min-h-[60vh] items-center justify-center"
+      >
+        <Loader2 className="size-8 animate-spin text-ink-muted" />
+      </div>
+    );
   }
 
+  const selectedView = projections?.[selected];
+
   return (
-    <>
-      {btcPrice && btcPrice > 0 ? (
-        <div className="calculator">
-          <InputPanel
-            onCalculate={(data: InputData) => refreshCalculations(data)}
-            clearChart={clearChart}
-          ></InputPanel>
-          <div className="calculator__result">
-            {chartData && tableData && (
-              <Result
-                btcPrice={btcPrice}
-                retirementAge={retirementAge}
-                annualBudget={annualBudget}
-                bitcoinPriceAtRetirement={bitcoinPriceAtRetirement}
-                savingsBitcoin={savingsBitcoin}
-                savingsFiat={savingsFiat}
-                chartData={chartData}
-                tableData={tableData}
-                optimized={optimized}
-                canRetire={canRetire}
-              />
-            )}
-          </div>
-        </div>
-      ) : (
-        <Spin fullscreen />
+    <div className="flex flex-col gap-4">
+      {/* `setInput` directly: InputBar's effect depends on the primitive input
+          values, so it fires once per real change, not once per render. */}
+      <InputBar onCalculate={setInput} />
+
+      {projections && (
+        <>
+          <StrategyComparison
+            conservative={projections.conservative}
+            optimized={projections.optimized}
+            selected={selected}
+            onSelect={setSelected}
+          />
+          {selectedView?.canRetire ? (
+            <StrategyDetail view={selectedView} />
+          ) : (
+            // Both lines, as the old CannotRetire panel had them. The second is
+            // the same string in all three locales on purpose — it is an idiom,
+            // not a missing translation.
+            <div className="flex flex-col gap-1 py-8 text-center italic">
+              <p>{t("cannot-retire.text")}</p>
+              <p>{t("cannot-retire.text2")}</p>
+            </div>
+          )}
+        </>
       )}
-    </>
+    </div>
   );
 };
 

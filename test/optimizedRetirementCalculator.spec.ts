@@ -85,3 +85,80 @@ test("Calculation with 2 percent inflation should give expected results", () => 
     expectedCalculation.annualRetirementBudgetAtRetirementAge?.toFixed(2),
   );
 });
+
+/**
+ * The two properties that define this strategy, pinned after an audit that went
+ * looking for a reason the projection leaves so much bitcoin behind. Neither
+ * found one — but both were unasserted, so a future change could break either
+ * without a single test noticing.
+ */
+const AUDIT_INPUT: InputData = {
+  currentAge: 30,
+  lifeExpectancy: 86,
+  currentSavingsInBitcoin: 1,
+  annualBuyInFiat: 5_000,
+  annualPriceGrowth: 20,
+  inflationRate: 2,
+  desiredRetirementAnnualBudget: 120_000,
+  optimized: true,
+};
+
+test("sells exactly the bitcoin the retirement decision was made against", () => {
+  for (const annualPriceGrowth of [10, 20, 30]) {
+    const input = { ...AUDIT_INPUT, annualPriceGrowth };
+    const result = calculateOptimal(input, 70_000);
+
+    const sold = result.dataSet
+      .filter((point) => point.bitcoinFlow < 0)
+      .reduce((total, point) => total + -point.bitcoinFlow, 0);
+
+    // Rebuilt from the inputs rather than from the result's own rows. Comparing
+    // the sales against the numbers the drawdown used to make them is an
+    // accounting identity that holds however much it sells; only a closed form
+    // says whether the amount itself is right.
+    //   price(k) = P0 * (1 + g)^k, budget(k) = B * (1 + i)^k, k years from now
+    let expected = 0;
+    for (let age = result.retirementAge; age <= input.lifeExpectancy; age++) {
+      const k = age - input.currentAge;
+      const price = 70_000 * Math.pow(1 + annualPriceGrowth / 100, k);
+      const budget =
+        input.desiredRetirementAnnualBudget * Math.pow(1 + input.inflationRate / 100, k);
+      expected += budget / price;
+    }
+    expect(sold).toBeCloseTo(expected, 10);
+
+    const stackAtRetirement = result.savingsBitcoin;
+    const leftAtDeath = result.dataSet[result.dataSet.length - 1].savingsBitcoin;
+    expect(sold + leftAtDeath).toBeCloseTo(stackAtRetirement, 10);
+
+    // And what is left is never negative: the strategy cannot fund a year by
+    // selling bitcoin it does not hold.
+    expect(leftAtDeath).toBeGreaterThan(0);
+    for (const point of result.dataSet) {
+      expect(point.savingsBitcoin).toBeGreaterThanOrEqual(0);
+    }
+  }
+});
+
+test("retires at the earliest age that survives, not the first comfortable one", () => {
+  for (const annualPriceGrowth of [10, 15, 20, 30]) {
+    const input = { ...AUDIT_INPUT, annualPriceGrowth };
+    const result = calculateOptimal(input, 70_000);
+    const previousYear = result.dataSet.find((point) => point.age === result.retirementAge - 1);
+    expect(previousYear).toBeDefined();
+
+    // Retiring a year earlier has to fail. The stack left over at death is large
+    // — up to 15% of the pot — which looks like the calculator waiting longer
+    // than it needs to. It is not: the lifetime requirement falls by that much
+    // every year, so crossing it once a year overshoots by roughly one year's
+    // drop. This asserts the overshoot is granularity and not slack.
+    const stackTheYearBefore = previousYear!.savingsBitcoin;
+    const neededFromRetirement = result.dataSet
+      .filter((point) => point.bitcoinFlow < 0)
+      .reduce((total, point) => total + -point.bitcoinFlow, 0);
+    // Plus the year before, which the dataSet holds as an accumulation row and
+    // so never priced as a sale: retiring at A-1 means funding A-1 too.
+    const costOfTheExtraYear = previousYear!.annualRetirementBudget / previousYear!.bitcoinPrice;
+    expect(stackTheYearBefore).toBeLessThan(neededFromRetirement + costOfTheExtraYear);
+  }
+});

@@ -17,8 +17,17 @@ export const calculateBitcoinPriceHistory = (
   bitcoinPrice: number,
   growthFactor: number,
   inflationFactor: number,
+  /**
+   * Defaults to the current year, which is what the app wants and what both
+   * calculators rely on — they call this with four arguments.
+   *
+   * It is a parameter so the year sequence can be asserted against a fixed
+   * value. Left implicit, every projected year moves on 1 January and any test
+   * naming one starts failing on a date nobody changed anything on.
+   */
+  startYear: number = new Date().getFullYear(),
 ) => {
-  let year = new Date().getFullYear();
+  let year = startYear;
   const priceHistory: AnnualBitcoinPrice[] = [];
   let currentAnnualBudget = input.desiredRetirementAnnualBudget;
 
