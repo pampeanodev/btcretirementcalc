@@ -162,7 +162,7 @@ const TableTab = ({ view }: { view: ProjectionView }) => {
         <Popover>
           <PopoverTrigger
             render={
-              <Button variant="outline" size="icon" aria-label="Choose columns">
+              <Button variant="outline" size="icon" aria-label={t("table.choose-columns")}>
                 <Settings2 />
               </Button>
             }

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ProjectionView } from "../../models/ProjectionView";
 import StrategyCard from "./StrategyCard";
 
@@ -15,23 +16,27 @@ const StrategyComparison = ({
   optimized,
   selected,
   onSelect,
-}: StrategyComparisonProps) => (
-  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-    <StrategyCard
-      view={conservative}
-      title="Sell everything at retirement"
-      caption="cash drawn down from the sale"
-      selected={selected === "conservative"}
-      onSelect={() => onSelect("conservative")}
-    />
-    <StrategyCard
-      view={optimized}
-      title="Sell what you need"
-      caption="keep holding, sell a slice each year"
-      selected={selected === "optimized"}
-      onSelect={() => onSelect("optimized")}
-    />
-  </div>
-);
+}: StrategyComparisonProps) => {
+  const [t] = useTranslation();
+
+  return (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <StrategyCard
+        view={conservative}
+        title={t("strategy.conservative-title")}
+        caption={t("strategy.conservative-caption")}
+        selected={selected === "conservative"}
+        onSelect={() => onSelect("conservative")}
+      />
+      <StrategyCard
+        view={optimized}
+        title={t("strategy.optimized-title")}
+        caption={t("strategy.optimized-caption")}
+        selected={selected === "optimized"}
+        onSelect={() => onSelect("optimized")}
+      />
+    </div>
+  );
+};
 
 export default StrategyComparison;

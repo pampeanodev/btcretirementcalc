@@ -26,6 +26,25 @@ describe("Donate", () => {
     expect(document.querySelector(".donate-content canvas")).not.toBeNull();
   });
 
+  it("says which network the QR pays, and shows the address it encodes", async () => {
+    const user = userEvent.setup();
+    render(<Donate />);
+
+    await user.click(screen.getByRole("button", { name: "Donate!" }));
+    await screen.findByText("Support this project:");
+
+    // The address is written out literally rather than imported from the
+    // component. It is a payment destination: a test that reads the same
+    // constant the component does would follow it anywhere, including somewhere
+    // nobody meant. Changing it has to mean changing this line too.
+    expect(await screen.findByText("bc1q8y92hwx02nxs5p6qkdm2322vvh55h3wkqpnrye")).toBeVisible();
+    expect(screen.getByText("Bitcoin · on-chain")).toBeInTheDocument();
+
+    // The canvas had no accessible name, so a screen reader reached the one
+    // control that matters here and announced nothing at all.
+    expect(screen.getByRole("img", { name: /on-chain Bitcoin address/i })).toBeInTheDocument();
+  });
+
   /**
    * Alby can no longer receive donations, so #50 deleted LnInvoice and
    * albyApiClient and collapsed this popover from two tabs to the on-chain QR

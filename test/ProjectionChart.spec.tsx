@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { ChartData, ChartOptions } from "chart.js";
+import { initI18n } from "./test-utils";
 import ProjectionChart, { buildSeries } from "../src/components/Results/ProjectionChart";
 import type { ChartUnit, ChartVariant } from "../src/components/Results/ProjectionChart";
 import { toProjectionView } from "../src/services/presentValue";
@@ -28,6 +29,10 @@ const conservativeView = () =>
     ...INPUT,
     optimized: false,
   });
+
+beforeAll(async () => {
+  await initI18n();
+});
 
 describe("buildSeries", () => {
   it("labels one point per projected year", () => {

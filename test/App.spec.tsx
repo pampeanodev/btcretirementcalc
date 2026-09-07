@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { initI18n, renderWithRouter } from "./test-utils";
 
@@ -58,17 +58,14 @@ describe("App", () => {
     const user = userEvent.setup();
     renderWithRouter(<App />);
 
-    const title = await screen.findByText("Bitcoin Retirement Calculator");
+    await screen.findByText("Bitcoin Retirement Calculator");
     await waitFor(() => expect(localStorage.getItem("theme")).toBe('"light"'));
 
-    // The switch carries no accessible name, so scope the query to the header.
-    // It used to have to compete with InputPanel's Conservative/Optimized
-    // switch; that one is gone, and the scoping stays because the header is
-    // where this control lives, not because something else would match.
-    const header = title.closest(".title");
-    expect(header).not.toBeNull();
-
-    await user.click(within(header as HTMLElement).getByRole("switch"));
+    // Found by name rather than by scoping to `.title`. The switch had no
+    // accessible name when this test was written, so it had to be located by
+    // the DOM around it; it carries one now, and a control a screen reader can
+    // name is a control a test can ask for the same way.
+    await user.click(screen.getByRole("switch", { name: "Dark mode" }));
 
     await waitFor(() => expect(localStorage.getItem("theme")).toBe('"dark"'));
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");

@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import i18next from "i18next";
+import { initI18n } from "./test-utils";
 import StrategyComparison from "../src/components/Results/StrategyComparison";
 import { toProjectionView } from "../src/services/presentValue";
 import { calculate } from "../src/services/bitcoinRetirementCalculator";
@@ -25,6 +27,10 @@ const views = () => ({
   optimized: toProjectionView(calculateOptimal(INPUT, PRICE), INPUT),
 });
 
+beforeAll(async () => {
+  await initI18n();
+});
+
 describe("StrategyComparison", () => {
   it("shows both strategies at once", () => {
     const { conservative, optimized } = views();
@@ -41,6 +47,40 @@ describe("StrategyComparison", () => {
     expect(screen.getByRole("button", { name: /sell what you need/i })).toBeInTheDocument();
     expect(screen.getByText(String(conservative.retirementAge))).toBeInTheDocument();
     expect(screen.getByText(String(optimized.retirementAge))).toBeInTheDocument();
+  });
+
+  it("renders its cards in the reader's language", async () => {
+    const { conservative, optimized } = views();
+    render(
+      <StrategyComparison
+        conservative={conservative}
+        optimized={optimized}
+        selected="optimized"
+        onSelect={() => {}}
+      />,
+    );
+
+    // The rest of this file runs in English, where a `t()` call and the English
+    // string it returns are indistinguishable — every assertion above passes
+    // against titles hard-coded in English, which is how they were written and
+    // how they stayed through four tasks. Only a second language tells them
+    // apart.
+    await act(async () => {
+      await i18next.changeLanguage("es");
+    });
+    try {
+      const card = screen.getByRole("button", { name: /Vender lo que necesitás/ });
+      expect(screen.getByRole("button", { name: /Vender todo al jubilarte/ })).toBeInTheDocument();
+      // Scoped to one card: both render the same two tiles, so an unscoped query
+      // matches twice. The tile labels come from StrategyCard, not from here.
+      expect(within(card).getByText("Stack al jubilarte")).toBeInTheDocument();
+      expect(within(card).getByText("Queda al final")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Sell what you need/ })).toBeNull();
+    } finally {
+      await act(async () => {
+        await i18next.changeLanguage("en");
+      });
+    }
   });
 
   it("marks the selected strategy for assistive tech", () => {

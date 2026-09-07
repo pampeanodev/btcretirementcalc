@@ -44,7 +44,7 @@ export default defineConfig([
     rules: {
       "react-refresh/only-export-components": [
         "error",
-        { allowConstantExport: true, allowExportNames: ["buildSeries"] },
+        { allowConstantExport: true, allowExportNames: ["buildSeries", "SERIES_LABEL_KEYS"] },
       ],
     },
   },

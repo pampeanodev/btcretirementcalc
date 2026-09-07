@@ -1,4 +1,5 @@
 import { Line } from "react-chartjs-2";
+import { useTranslation } from "react-i18next";
 import "chart.js/auto";
 import { ProjectionView } from "../../models/ProjectionView";
 import { BITCOIN_SIGN, toUsd } from "../../constants";
@@ -210,9 +211,24 @@ type ProjectionChartProps = { view: ProjectionView; height?: number } & (
   { variant: "stack"; unit?: ChartUnit } | { variant: "cash"; unit?: never }
 );
 
+/**
+ * `buildSeries` is a pure mapping the tests assert on directly, so its labels
+ * stay fixed identifiers rather than reader-facing text. They become text here,
+ * which is the only place that has a `t`.
+ */
+export const SERIES_LABEL_KEYS: Record<string, string> = {
+  "₿ held": "chart.btc-held",
+  "₿ sold": "chart.btc-sold",
+  "$ savings": "chart.usd-savings",
+  "$ value": "chart.usd-value",
+  "$ withdrawn": "chart.usd-withdrawn",
+};
+
 const ProjectionChart = ({ view, variant, unit, height = 260 }: ProjectionChartProps) => {
+  const [t] = useTranslation();
   const series =
     variant === "cash" ? buildSeries(view, "cash") : buildSeries(view, "stack", unit ?? "btc");
+  const labelOf = (label: string) => t(SERIES_LABEL_KEYS[label] ?? label);
   // cash genuinely plots two units, so it keeps a second axis. stack shows one
   // unit at a time, which disposes of the cross-unit half of the scale problem.
   const dualAxis = variant === "cash";
@@ -223,7 +239,7 @@ const ProjectionChart = ({ view, variant, unit, height = 260 }: ProjectionChartP
   // bottom tenth. Bitcoin starts at 61% of its maximum and never had the
   // problem, so it stays linear and keeps its intuitive distances.
   const mainScale = mainUnit === "btc" ? ("linear" as const) : ("logarithmic" as const);
-  const dollarTitle = "Today's dollars (log scale)";
+  const dollarTitle = t("chart.dollar-axis");
   const ink = readToken("--color-ink-muted");
   const grid = readToken("--border");
   const lastLabel = series.labels[series.labels.length - 1] ?? "";
@@ -231,15 +247,19 @@ const ProjectionChart = ({ view, variant, unit, height = 260 }: ProjectionChartP
   return (
     <div className="w-full" style={{ height }}>
       <Line
-        aria-label={`Projection over ages ${series.labels[0] ?? ""} to ${lastLabel}, plotting ${series.datasets
-          .map((d) => d.label)
-          .join(" and ")}.`}
+        aria-label={t("chart.aria", {
+          from: series.labels[0] ?? "",
+          to: lastLabel,
+          series: series.datasets
+            .map((d) => labelOf(d.label))
+            .join(` ${t("chart.series-joiner")} `),
+        })}
         data={{
           labels: series.labels,
           datasets: series.datasets.map((d) => {
             const color = readToken(d.token);
             return {
-              label: d.label,
+              label: labelOf(d.label),
               data: d.data,
               fill: d.fill,
               borderColor: color,
@@ -264,9 +284,8 @@ const ProjectionChart = ({ view, variant, unit, height = 260 }: ProjectionChartP
                   // may have gaps. `buildSeries` never produces one, and a gap
                   // that did appear should read as absent rather than as zero.
                   const value = item.parsed.y;
-                  return value === null
-                    ? dataset.label
-                    : `${dataset.label}: ${formatValue(value, dataset.unit)}`;
+                  const name = labelOf(dataset.label);
+                  return value === null ? name : `${name}: ${formatValue(value, dataset.unit)}`;
                 },
                 afterBody: (items) => {
                   // Disclosure follows what is on screen. A pure-bitcoin chart
@@ -278,9 +297,16 @@ const ProjectionChart = ({ view, variant, unit, height = 260 }: ProjectionChartP
                   const point = view.points[items[0].dataIndex];
                   // Everything in dollars here is in today's money; the future
                   // amounts are disclosed so the conversion is never silent.
-                  const lines = [`nominal ${toUsd(point.savingsFiat)} in ${point.year}`];
+                  const lines = [
+                    t("disclosure.tooltip-nominal", {
+                      amount: toUsd(point.savingsFiat),
+                      year: point.year,
+                    }),
+                  ];
                   if (showsWithdrawal && point.bitcoinFlow < 0) {
-                    lines.push(`nominal withdrawal ${toUsd(point.annualBudget)}`);
+                    lines.push(
+                      t("disclosure.tooltip-withdrawal", { amount: toUsd(point.annualBudget) }),
+                    );
                   }
                   return lines;
                 },
@@ -289,7 +315,7 @@ const ProjectionChart = ({ view, variant, unit, height = 260 }: ProjectionChartP
           },
           scales: {
             x: {
-              title: { display: true, text: "Age", color: ink },
+              title: { display: true, text: t("chart.age-axis"), color: ink },
               ticks: { color: ink, maxRotation: 0, autoSkipPadding: 16 },
               grid: { color: grid },
             },

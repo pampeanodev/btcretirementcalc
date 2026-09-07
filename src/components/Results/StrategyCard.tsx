@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ProjectionView } from "../../models/ProjectionView";
 import { toBtc, toUsd } from "../../constants";
 import ProjectionChart from "./ProjectionChart";
@@ -12,6 +13,7 @@ interface StrategyCardProps {
 }
 
 const StrategyCard = ({ view, title, caption, selected, onSelect }: StrategyCardProps) => {
+  const [t] = useTranslation();
   const last = view.points[view.points.length - 1];
 
   return (
@@ -32,11 +34,15 @@ const StrategyCard = ({ view, title, caption, selected, onSelect }: StrategyCard
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <StatTile label="Stack at retirement" value={toBtc(view.savingsBitcoin)} />
+        <StatTile label={t("strategy.stack-at-retirement")} value={toBtc(view.savingsBitcoin)} />
         <StatTile
-          label="Left at the end"
+          label={t("strategy.left-at-the-end")}
           value={toUsd(last ? last.savingsFiatReal : 0)}
-          nominal={last ? `${toUsd(last.savingsFiat)} in ${last.year}` : undefined}
+          nominal={
+            last
+              ? t("disclosure.nominal-in", { amount: toUsd(last.savingsFiat), year: last.year })
+              : undefined
+          }
         />
       </div>
 
