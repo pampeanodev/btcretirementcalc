@@ -70,7 +70,9 @@ const ScrubField = ({
             // actually holds, so a field left empty does not stay empty.
             onBlur={() => setDraft(null)}
           />
-          {unit && <span className="text-xs text-ink-muted">{unit}</span>}
+          {/* Fixed width, and always rendered: the plain number boxes keep the
+              same slot, so every figure in the bar lands on one right edge. */}
+          <span className="w-3 text-xs text-ink-muted">{unit}</span>
         </div>
       </div>
       {/* The visible track is 4px. The negative margin buys a ~44px touch

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { InputData } from "../../models/InputData";
+import { BITCOIN_SIGN } from "../../constants";
 import ScrubField from "../common/ScrubField";
 
 const num = (params: URLSearchParams, key: string, fallback: number) => {
@@ -20,6 +21,8 @@ interface NumberFieldProps {
   min: number;
   max?: number;
   step?: number;
+  /** Rendered in a fixed-width slot so the figures line up with ScrubField's. */
+  unit?: string;
   onChange: (value: number) => void;
 }
 
@@ -41,27 +44,39 @@ interface NumberFieldProps {
  * name with a string that never translates, leaving a pt or es reader with a
  * name that has nothing to do with what they can see.
  */
-const NumberField = ({ label, value, min, max, step, onChange }: NumberFieldProps) => {
+const NumberField = ({ label, value, min, max, step, unit, onChange }: NumberFieldProps) => {
   const [draft, setDraft] = useState<string | null>(null);
 
+  // Same card, same header row and same unit slot as ScrubField. These three
+  // used to be bare rows beside four bordered ones, which read as two kinds of
+  // control in one bar, and their figures aligned to a different right edge
+  // because nothing stood where the other rows keep their unit.
   return (
-    <label className="flex items-center justify-between gap-2 text-xs">
-      {label}
-      <Input
-        type="number"
-        className="w-28 text-right font-mono"
-        min={min}
-        max={max}
-        step={step}
-        value={draft ?? String(value)}
-        // NaN reaches `onChange` mid-edit by design; `set` is the single place
-        // that decides a non-number never lands in the query string.
-        onChange={(e) => {
-          setDraft(e.target.value);
-          onChange(e.target.valueAsNumber);
-        }}
-        onBlur={() => setDraft(null)}
-      />
+    <label className="flex items-baseline justify-between gap-3 rounded-lg border border-border px-3 py-2">
+      <span className="text-xs text-ink-muted">{label}</span>
+      <div className="flex items-baseline gap-1">
+        <Input
+          type="number"
+          className="w-28 border-0 bg-transparent p-0 text-right font-mono shadow-none focus-visible:ring-0"
+          min={min}
+          max={max}
+          step={step}
+          value={draft ?? String(value)}
+          // NaN reaches `onChange` mid-edit by design; `set` is the single place
+          // that decides a non-number never lands in the query string.
+          onChange={(e) => {
+            setDraft(e.target.value);
+            onChange(e.target.valueAsNumber);
+          }}
+          onBlur={() => setDraft(null)}
+        />
+        {/* `aria-hidden` because this `<label>` wraps the box, so anything
+            inside it joins the accessible name — "Amount of ₿itcoin you hodl: ₿".
+            ScrubField's unit sits outside its label and needs no such guard. */}
+        <span aria-hidden="true" className="w-3 text-xs text-ink-muted">
+          {unit}
+        </span>
+      </div>
     </label>
   );
 };
@@ -141,6 +156,7 @@ const InputBar = ({ onCalculate }: { onCalculate: (data: InputData) => void }) =
           label={t("input.savings-btc")}
           min={0}
           step={0.01}
+          unit={BITCOIN_SIGN}
           value={currentSavings}
           onChange={(v) => set("currentSavings", v)}
         />
