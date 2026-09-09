@@ -59,7 +59,7 @@ One caveat for larger path counts: the retirement search is O(years²) —
 does not matter at 56 years (measured above), and it would be worth a prefix-sum
 before anyone reaches for 100 000 paths.
 
-## 4. Which model — needs a decision
+## 4. Which model — decided 2026-09-08
 
 |                                                                                  | Captures                              | Cost                                                                                                                             |
 | -------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
