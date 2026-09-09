@@ -1,8 +1,8 @@
 # Simulating price fluctuation — scoping
 
-**Status:** not a spec and not an approved plan. This is the measurement and the
-open questions that a brainstorming session should start from. Nothing here has
-been agreed.
+**Status:** the two open questions have been answered — see §4 and §5, updated
+2026-09-08. Still not a spec: the model and the data source are settled, the
+product questions in §1 and §7 are not.
 
 **Why:** the model prices bitcoin as `P₀ · (1 + g)^k` — a single smooth path with
 no volatility, no drawdowns and no sequence-of-returns risk. An audit of the
@@ -42,11 +42,11 @@ cheapest part of the work and it should stay that way.
 
 ## 3. Measured cost
 
-| | |
-|---|---|
-| One conservative + one optimized projection | **27 µs** |
-| 1 000 paths (both strategies) | **27 ms** |
-| 10 000 paths | **273 ms** |
+|                                             |            |
+| ------------------------------------------- | ---------- |
+| One conservative + one optimized projection | **27 µs**  |
+| 1 000 paths (both strategies)               | **27 ms**  |
+| 10 000 paths                                | **273 ms** |
 
 Measured in jsdom on this machine, 2 000 iterations after a warm-up.
 
@@ -59,39 +59,85 @@ One caveat for larger path counts: the retirement search is O(years²) —
 does not matter at 56 years (measured above), and it would be worth a prefix-sum
 before anyone reaches for 100 000 paths.
 
-## 4. Which model — needs a decision
+## 4. Which model — decided 2026-09-08
 
-| | Captures | Cost |
-|---|---|---|
-| **(a) GBM**, drift = the user's CAGR, σ from history | volatility | trivial; assumes log-normal, so it throws away fat tails *and* the cycle — the two things that make the current model optimistic |
-| **(b) Historical bootstrap** — resample real annual log-returns with replacement | real magnitudes, fat tails | needs a bundled series; i.i.d. resampling destroys sequence |
-| **(c) Block bootstrap** — resample multi-year blocks | fat tails **and** drawdown clustering | same data, slightly more code |
+|                                                                                  | Captures                              | Cost                                                                                                                             |
+| -------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **(a) GBM**, drift = the user's CAGR, σ from history                             | volatility                            | trivial; assumes log-normal, so it throws away fat tails _and_ the cycle — the two things that make the current model optimistic |
+| **(b) Historical bootstrap** — resample real annual log-returns with replacement | real magnitudes, fat tails            | needs a bundled series; i.i.d. resampling destroys sequence                                                                      |
+| **(c) Block bootstrap** — resample multi-year blocks                             | fat tails **and** drawdown clustering | same data, slightly more code                                                                                                    |
 
-**Recommendation: (c), falling back to (b).** The risk this feature exists to show
-— selling into a drawdown — is a *sequence* effect. Independent yearly draws
-scatter the bad years evenly and quietly delete the exact scenario that matters.
-Block length is a real parameter to argue about; the four-year halving period is
-the obvious candidate and also the obvious thing to be sceptical of.
+**DECIDED (2026-09-08): (c), block bootstrap**, and the model must be explained to
+the reader in a tooltip or popover rather than left implicit.
 
-**(a) is not a bad first step** if the goal is to ship something and learn. It just
-should not be described to the reader as modelling real bitcoin behaviour.
+The reason it wins: the risk this feature exists to show — selling into a
+drawdown — is a _sequence_ effect. Independent yearly draws scatter the bad years
+evenly and quietly delete the exact scenario that matters.
 
-## 5. Where the statistics come from — needs a decision
+**Work in monthly log returns, not annual ones.** The measured history (§5) yields
+only 16 annual returns, and 4-year blocks over 16 observations leave ~13
+overlapping windows — too few to resample without the output being a rearrangement
+of the same handful of paths. Monthly returns over the same span give ~200
+observations and ~150 distinct 48-month windows. Block length 48 months keeps the
+halving cycle; that number is the obvious candidate and also the obvious thing to
+stay sceptical of.
 
-The request was "estadística real del precio de btc a lo largo de los años", so
-the numbers have to come from data rather than from a plausible-sounding σ. Two
-open questions, neither of which I should answer alone:
+**On the tooltip.** The app already has the shadcn `Popover` primitive and used to
+carry exactly this pattern in `AnnualBudgetExplanation`, which was deleted in the
+redesign because its callers went. Bringing that component back is the natural
+home for this explanation, and it settles an outstanding item in the handoff at
+the same time. What it has to say, at minimum: that the paths are resampled from
+real bitcoin history rather than simulated from a formula, in multi-year blocks so
+that crashes stay attached to the runs that preceded them, and that past
+behaviour is not a forecast.
 
-**Bundled or fetched?** A static series committed to the repo is deterministic,
-works offline, is auditable in review, and goes stale. Fetching at runtime is
-fresh and adds a dependency, a failure mode, and a second network call to an app
-that already has one API-token problem. **Recommendation: bundle it**, with the
-source and the retrieval date written into the file.
+## 5. Where the statistics come from — measured 2026-09-08
 
-**How far back?** Starting in 2010–2013 includes early-adoption returns that will
-not recur and that dominate any resample. Starting in 2017 halves the sample.
-This choice moves the output more than the model choice does, and it is a
-judgement about the future, not about the data.
+**yadio cannot supply this, and that was checked rather than assumed.**
+`/hist/{range}/{currency}` takes a number of **days**, not a period: `5y` returns
+five points, `10y` returns ten — the API parses the leading integer and drops the
+suffix. `365` works and returns 365 daily points. **`366` and everything above it
+return `{"error":"invalid parameter"}`.** One year of daily closes is the whole
+offering. It stays the live-price source it already is; it cannot be the history.
+
+CoinGecko's free tier refuses the same way, explicitly: _"Public API users are
+limited to querying historical data..."_.
+
+| Source                                                 | Depth measured                              | Key?   |
+| ------------------------------------------------------ | ------------------------------------------- | ------ |
+| yadio `/hist`                                          | **365 days, hard cap**                      | no     |
+| CoinGecko free                                         | capped, refuses long ranges                 | no     |
+| Binance `/api/v3/klines`                               | 2017-08 → today, monthly candles            | no     |
+| **blockchain.com `/charts/market-price?timespan=all`** | **2009-01 → today, 1 615 points, 17 years** | **no** |
+
+**Recommendation: blockchain.com, fetched once and committed to the repo** as a
+static series, with the source URL and the retrieval date in the file. Bundling
+keeps the simulation deterministic, offline, reviewable in a diff, and free of a
+second runtime dependency — and these statistics have no reason to be fresh to
+the day.
+
+**How far back to include — still a judgement, and now a concrete one.** These are
+the annual returns that source actually returns:
+
+```
+2011  +1556%    2012  +205%     2013  +5204%    2014   -57%
+2015    +39%    2016  +115%     2017  +1256%    2018   -70%
+2019    +94%    2020  +295%     2021   +61%     2022   -64%
+2023   +163%    2024  +115%     2025    -6%     2026    -9%
+```
+
+2011 and 2013 are early-adoption returns that will not recur, and a resampler that
+draws them produces paths nobody should be shown. Cutting them costs two of
+sixteen observations. Starting at 2015 or 2017 is defensible and halves the
+sample. **This choice moves the output more than the model choice does, and it is
+a judgement about the future rather than about the data** — so whatever is picked
+should be visible to the reader in the same popover as the model, not buried in a
+constant.
+
+Two things this table settles on its own. The realized range is **−70% to +5204%**,
+which is the case against a constant 20% CAGR in one line. And the drawdowns
+cluster — 2014, 2018, 2022 — four years apart, which is the case for block
+resampling over independent draws.
 
 ## 6. Determinism is not optional
 
@@ -99,7 +145,7 @@ Seeded PRNG. `Math.random()` must not appear anywhere in this feature.
 
 Two reasons, both concrete. Tests go flaky otherwise, and a flake already cost
 time in the session that produced this note. And the query string is this app's
-sharing contract — a link that reproduces a *different* fan chart for the person
+sharing contract — a link that reproduces a _different_ fan chart for the person
 you sent it to is a broken link. **The seed belongs in the URL** alongside the
 other parameters.
 
@@ -112,7 +158,7 @@ Not a list of chores — each of these is a small design question:
 - **`ProjectionChart`** plots lines. A fan chart wants percentile bands, which is
   a different data shape than `ProjectionView.points` and a different chart.js
   configuration (`fill` between datasets).
-- **`TableTab`** shows one row per year — of *which* path? Probably the median,
+- **`TableTab`** shows one row per year — of _which_ path? Probably the median,
   and it has to say so.
 - **The query string** carries scalars today; it gains a seed and a path count.
   Existing shared links must keep working — they currently do, and that was
@@ -131,12 +177,24 @@ the distribution, and whether the old deterministic mode stays available.
 
 Roughly, and only after the decisions in §4 and §5 are made:
 
-1. The historical series, bundled, with its provenance — and a test that it
-   parses and covers the range it claims.
-2. A seeded PRNG and the sampler, tested against known seeds.
+1. The historical series from blockchain.com, reduced to monthly closes,
+   committed with its source URL and retrieval date — and a test that it parses,
+   covers the span it claims, and contains no gaps.
+2. A seeded PRNG and the block sampler, tested against known seeds.
 3. The Monte Carlo runner over the existing calculators; assertions on the
    distribution, not on any single path.
 4. The percentile aggregation into whatever shape the chart needs.
-5. The UI, last, because §7 is where the design questions actually live.
+5. The UI, last, because §7 is where the design questions actually live — and the
+   popover from §4, which is where `AnnualBudgetExplanation` comes back.
 
 Steps 1–3 are self-contained and testable without touching a component.
+
+**One trap worth naming before step 3.** The existing calculators decide
+retirement by summing `budget / price` over _every remaining year of the known
+price path_. That is only meaningful when the path is known in advance. Under
+resampling it becomes a person with perfect foresight of the next fifty years of
+bitcoin, which is a stronger assumption than the constant CAGR it replaces, not a
+weaker one. The retirement rule has to be restated in terms a person could
+actually act on — a withdrawal rate, a multiple of current spending, a rolling
+re-check — and that is a design decision, not a port. It is the real work in this
+feature, and it is not in the 27 µs.
